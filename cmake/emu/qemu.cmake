@@ -252,6 +252,10 @@ if(CONFIG_SMP)
   list(APPEND QEMU_SMP_FLAGS -smp cpus=${CONFIG_MP_NUM_CPUS})
 endif()
 
+if(QEMU_ICOUNT_SHIFT)
+  list(APPEND QEMU_FLAGS -icount shift=${QEMU_ICOUNT_SHIFT},align=off,sleep=off -rtc clock=vm)
+endif()
+
 # Use flags passed in from the environment
 set(env_qemu $ENV{QEMU_EXTRA_FLAGS})
 separate_arguments(env_qemu)

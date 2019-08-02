@@ -517,6 +517,14 @@ class Handler:
         self.lock.release()
         return ret
 
+    def get_run_time(self, pid):
+        r = os.popen('ps -o time ' + str(pid) + ' | grep :')
+        text = r.read()
+        r.close()
+        hour, minute, second = text.strip().split(":")
+        seconds = int(hour) * 3600 + int(minute) * 60 + int(second)
+        return seconds
+
 class BinaryHandler(Handler):
     def __init__(self, instance, type_str):
         """Constructor
@@ -784,9 +792,23 @@ class QEMUHandler(Handler):
         metrics = {}
         line = ""
         timeout_extended = False
+
+        pid = 0
+        ran_time = 0
+        if os.path.exists(pid_fn):
+            pid = int(open(pid_fn).read())
+            os.unlink(pid_fn)
+            ran_time = handler.get_run_time(pid)
+
         while True:
             this_timeout = int((timeout_time - time.time()) * 1000)
             if this_timeout < 0 or not p.poll(this_timeout):
+                if pid and this_timeout > 0:
+                    seconds = handler.get_run_time(pid)
+                    if seconds < timeout and not out_state:
+                        timeout_time += (timeout + ran_time - seconds)
+                        continue
+
                 if not out_state:
                     out_state = "timeout"
                 break
@@ -845,10 +867,8 @@ class QEMUHandler(Handler):
         log_out_fp.close()
         out_fp.close()
         in_fp.close()
-        if os.path.exists(pid_fn):
-            pid = int(open(pid_fn).read())
-            os.unlink(pid_fn)
 
+        if pid > 0:
             try:
                 if pid:
                     os.kill(pid, signal.SIGTERM)
@@ -1278,6 +1298,8 @@ class MakeGenerator:
 
         handler = None
         if type == "qemu":
+            if options.icount_shift and options.icount_shift <= 10:
+                instance.test.timeout = 200 / options.icount_shift
             handler = QEMUHandler(instance, "qemu")
         elif type == "native":
             handler = BinaryHandler(instance, "native")
@@ -1302,6 +1324,8 @@ class MakeGenerator:
 
         if type == 'qemu':
             args.append("QEMU_PIPE=%s" % handler.get_fifo())
+            if options.icount_shift and options.icount_shift <= 10:
+                args.append("QEMU_ICOUNT_SHIFT=%s" % options.icount_shift)
 
         text = self._get_rule_header(name)
         if not options.test_only:
@@ -2782,6 +2806,11 @@ Artificially long but functional example:
         "that have that value defined. For the <config> case, match "
         "defconfig that have that value assigned to any value. "
         "Prepend a '!' to invert the match.")
+
+    parser.add_argument(
+        "--icount-shift", type=int,
+        help="Specify icount-shift to restrict shift value when sanity "
+        "check test runs on icount mode of QEMU emulator.")
 
     test_xor_subtest = case_select.add_mutually_exclusive_group()
 
