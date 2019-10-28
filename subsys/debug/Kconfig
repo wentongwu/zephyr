@@ -46,6 +46,21 @@ config TRACING
 	  Enable system tracing. This requires a backend such as SEGGER
 	  Systemview to be enabled as well.
 
+config TRACING_BUFFER_SIZE
+        int "Number of bytes dedicated for tracing packet buffer."
+	depends on TRACING
+        default 1024
+        range 128 65536
+        help
+          Number of bytes dedicated for tracing packet buffer.
+
+config TRACING_DUP_MAX_STRING
+	int "Max length of string that can be duplicated"
+	depends on TRACING
+	default 32
+	help
+	  Max length of string that can be duplicated.
+
 config ASAN
 	bool "Build with address sanitizer"
 	depends on ARCH_POSIX
