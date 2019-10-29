@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <kernel.h>
+#include <sys/atomic.h>
+#include <tracing_packet.h>
+
 #define PACKET_SIZE sizeof(struct tracing_packet)
 #define NUM_OF_PACKETS (CONFIG_TRACING_BUFFER_SIZE / PACKET_SIZE)
 
-struct k_mem_slab tracing_packet_pool;
+static atomic_t dropped_num;
+
+static struct k_mem_slab tracing_packet_pool;
 static u8_t __noinit __aligned(sizeof(void *))
 		tracing_packet_pool_buf[CONFIG_TRACING_BUFFER_SIZE];
-
-void tracing_packet_pool_init(void)
-{
-	k_mem_slab_init(&tracing_packet_pool,
-		tracing_packet_pool_buf, PACKET_SIZE, NUM_OF_PACKETS);
-}
 
 /* Return true if interrupts were locked in current context */
 static bool is_irq_locked(void)
@@ -27,34 +27,42 @@ static bool is_irq_locked(void)
 	return ret;
 }
 
-/* Check if context can be blocked and pend on available memory slab.
- * Context can be blocked if in a thread and interrupts are not locked.
+/*
+ * Context can be blocked in a thread if interrupts are not locked.
  */
 static bool block_on_alloc(void)
 {
-	if (!IS_ENABLED(CONFIG_LOG_BLOCK_IN_THREAD)) {
-		return false;
-	}
-
 	return (!k_is_in_isr() && !is_irq_locked());
+}
+
+static void tracing_packet_drop(void)
+{
+	atomic_inc(&dropped_num);
+}
+
+void tracing_packet_pool_init(void)
+{
+	k_mem_slab_init(&tracing_packet_pool,
+		tracing_packet_pool_buf, PACKET_SIZE, NUM_OF_PACKETS);
 }
 
 struct tracing_packet *tracing_packet_alloc(void)
 {
+	int ret = 0;
 	struct tracing_packet *packet = NULL;
 
-	int err = k_mem_slab_alloc(&tracing_packet_pool, (void **)&packet,
+	ret = k_mem_slab_alloc(&tracing_packet_pool, (void **)&packet,
 			block_on_alloc() ?
-			CONFIG_LOG_BLOCK_IN_THREAD_TIMEOUT_MS : K_NO_WAIT);
+			CONFIG_TRACING_BLOCK_IN_THREAD_TIMEOUT_MS : K_NO_WAIT);
 
-	if (err != 0) {
-		//TODO
+	if (ret != 0) {
+		tracing_packet_drop();
 	}
 
 	return packet;
 }
 
-struct tracing_packet *tracing_packet_free(struct tracing_packet *packet)
+void tracing_packet_free(struct tracing_packet *packet)
 {
 	k_mem_slab_free(&tracing_packet_pool, (void **)&packet);
 }

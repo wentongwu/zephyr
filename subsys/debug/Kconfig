@@ -46,6 +46,13 @@ config TRACING
 	  Enable system tracing. This requires a backend such as SEGGER
 	  Systemview to be enabled as well.
 
+config TRACING_THREAD_STACK_SIZE
+	int "Stack size for tracing thread"
+	depends on TRACING
+	default 1024
+	help
+	  Set stack size for tracing thread.
+
 config TRACING_BUFFER_SIZE
         int "Number of bytes dedicated for tracing packet buffer."
 	depends on TRACING
@@ -60,6 +67,29 @@ config TRACING_DUP_MAX_STRING
 	default 32
 	help
 	  Max length of string that can be duplicated.
+
+config TRACING_BLOCK_IN_THREAD_TIMEOUT_MS
+	int "Maximum time (in milliseconds) thread can be blocked"
+	depends on TRACING
+	default 1000
+	range 1 10000
+	help
+	  Maximum time (in milliseconds) thread can be blocked to wait new
+	  tracing packet to be allocated.
+
+config TRACING_THREAD_TRIGGER_THRESHOLD
+	int "Number of buffered tracing packets which triggers tracing thread."
+	depends on TRACING
+	default 10
+	help
+	  When number of buffered tracing packets reaches the threshold,
+	  tracing thread is waken up.
+
+config TRACING_THREAD_SLEEP_MS
+	int "Set tracing thread sleeping period"
+	default 1000
+	help
+	  Tracing thread sleeps for requested period given in milliseconds.
 
 config ASAN
 	bool "Build with address sanitizer"
