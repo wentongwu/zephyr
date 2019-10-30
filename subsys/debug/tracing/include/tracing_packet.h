@@ -17,7 +17,7 @@ extern "C" {
 struct tracing_packet {
 	sys_snode_t list_node;
 	u32_t length;
-	u8_t bytes[CONFIG_TRACING_DUP_MAX_STRING];
+	u8_t buf[CONFIG_TRACING_DUP_MAX_STRING];
 };
 
 void tracing_packet_pool_init(void);
