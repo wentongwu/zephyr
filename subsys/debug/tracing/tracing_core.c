@@ -22,12 +22,26 @@ static K_SEM_DEFINE(tracing_thread_sem, 0, 1);
 static K_THREAD_STACK_DEFINE(tracing_thread_stack,
 			CONFIG_TRACING_THREAD_STACK_SIZE);
 
+struct tracing_packet *tracing_list_get_packet(void);
+
+static void tracing_packet_handle(struct tracing_packet * packet)
+{
+	ARG_UNUSED(packet);
+}
+
 static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 {
+	struct tracing_packet *packet = NULL;
+
 	tracing_thread_tid = k_current_get();
 
 	while (true) {
-		k_sem_take(&tracing_thread_sem, K_FOREVER);
+		packet = tracing_list_get_packet();
+		if (packet == NULL) {
+			k_sem_take(&tracing_thread_sem, K_FOREVER);
+		} else {
+			tracing_packet_handle(packet);
+		}
 	}
 }
 
@@ -42,6 +56,8 @@ static int tracing_enable(struct device *arg)
 
 	k_timer_init(&tracing_thread_timer,
 		tracing_thread_timer_expiry_fn, NULL);
+
+	tracing_packet_pool_init();
 
 	k_thread_create(&tracing_thread, tracing_thread_stack,
 			K_THREAD_STACK_SIZEOF(tracing_thread_stack),
