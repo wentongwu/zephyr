@@ -5,6 +5,7 @@ zephyr_include_directories_ifdef(CONFIG_TRACING include)
 zephyr_sources_ifdef(
   CONFIG_TRACING
   tracing_core.c
+  tracing_format.c
   tracing_packet.c
   )
 

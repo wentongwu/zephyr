@@ -13,7 +13,9 @@
 extern "C" {
 #endif
 
-__syscall void tracing_format_string_from_user(const char* str);
+__syscall void tracing_format_string_from_user(const char* str, u32_t length);
+
+__syscall void tracing_format_data_from_user(u32_t nargs, u32_t *buf);
 
 #ifdef __cplusplus
 }
