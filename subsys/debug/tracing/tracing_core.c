@@ -32,27 +32,12 @@ static const struct tracing_backend *working_backend;
 
 static k_tid_t tracing_thread_tid;
 static struct k_thread tracing_thread;
-#if 0
-static struct k_timer tracing_thread_timer;
-static K_SEM_DEFINE(tracing_thread_sem, 0, 1);
-#endif
 static K_THREAD_STACK_DEFINE(tracing_thread_stack,
 			CONFIG_TRACING_THREAD_STACK_SIZE);
 
 static void tracing_set_state(enum tracing_state state)
 {
 	atomic_set(&tracing_state, state);
-}
-
-void tracing_cmd_handle(u8_t *buf)
-{
-	if (strncmp(buf,
-	    TRACING_CMD_ENABLE, 6) == 0) {
-		tracing_set_state(TRACING_ENABLE);
-	} else if (strncmp(buf,
-	    TRACING_CMD_DISABLE, 6) == 0) {
-		tracing_set_state(TRACING_DISABLE);
-	}
 }
 
 static const struct tracing_backend *tracing_get_working_backend(
@@ -71,17 +56,16 @@ static const struct tracing_backend *tracing_get_working_backend(
 	return NULL;
 }
 
-static void tracing_buffer_handle(u8_t *data, u32_t size)
+static void tracing_buffer_handle(u8_t *data, u32_t length)
 {
-	tracing_backend_output(working_backend, data, size);
+	tracing_backend_output(working_backend, data, length);
 }
 
 static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 {
-	u8_t *transfering_buf = NULL;
-	u32_t transfering_size = 0;
-	u32_t working_backend_max_size =
-		tracing_backend_get_max_buffer_size(working_backend);
+	u8_t *transfering_buf;
+	u32_t transfering_length;
+	u32_t tracing_buffer_max_length = tracing_buffer_capacity_get();
 
 	tracing_thread_tid = k_current_get();
 
@@ -91,38 +75,24 @@ static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 		tracing_set_state(TRACING_ENABLE);
 	}
 
-	printk("working_backend_max_size = %d\n", working_backend_max_size);
 	while (true) {
-		if (tracing_buffer_empty()) {
-			//k_sem_take(&tracing_thread_sem, K_FOREVER);
+		if (tracing_buffer_is_empty()) {
 			k_sleep(100);
 		} else {
-			transfering_size = tracing_buffer_get(transfering_buf, 1000);
-						//working_backend_max_size - 1);
-			printk("transfering_size = %d\n", transfering_size);
-			tracing_buffer_handle(transfering_buf,
-					      transfering_size);
+			transfering_length =
+				tracing_buffer_get(&transfering_buf,
+						   tracing_buffer_max_length);
 
-			tracing_buffer_get_finish(transfering_size);
+			tracing_buffer_handle(transfering_buf,
+					      transfering_length);
+			tracing_buffer_get_finish(transfering_length);
 		}
 	}
 }
 
-#if 0
-static void tracing_thread_timer_expiry_fn(struct k_timer *timer)
-{
-	k_sem_give(&tracing_thread_sem);
-}
-#endif
-
 static int tracing_init(struct device *arg)
 {
 	ARG_UNUSED(arg);
-
-#if 0
-	k_timer_init(&tracing_thread_timer,
-		tracing_thread_timer_expiry_fn, NULL);
-#endif
 
 	tracing_buffer_init();
 
@@ -164,34 +134,18 @@ bool z_vrfy_is_tracing_enabled(void)
 #include <syscalls/is_tracing_enabled_mrsh.c>
 #endif
 
-#if 0
-void tracing_core_process(void)
-{
-	if (tracing_thread_tid != NULL && tracing_list_packet_num == 1) {
-		k_timer_start(&tracing_thread_timer,
-			CONFIG_TRACING_THREAD_WAIT_THRESHOLD_MS, K_NO_WAIT);
-	} else if (CONFIG_TRACING_THREAD_TRIGGER_THRESHOLD &&
-	    tracing_thread_tid != NULL && (tracing_list_packet_num ==
-	    CONFIG_TRACING_THREAD_TRIGGER_THRESHOLD)) {
-		k_timer_stop(&tracing_thread_timer);
-		k_sem_give(&tracing_thread_sem);
-	}
-}
-
-bool tracing_packet_try_free(void)
-{
-	struct tracing_packet *packet = NULL;
-
-	packet = tracing_list_get_packet();
-	if (packet) {
-		tracing_packet_handle(packet);
-	}
-
-	return tracing_list_peek_head();
-}
-#endif
-
 bool is_tracing_thread(void)
 {
 	return (!k_is_in_isr() && (k_current_get() == tracing_thread_tid));
+}
+
+void tracing_cmd_handle(u8_t *buf, u32_t length)
+{
+	if (strncmp(buf,
+	    TRACING_CMD_ENABLE, length) == 0) {
+		tracing_set_state(TRACING_ENABLE);
+	} else if (strncmp(buf,
+	    TRACING_CMD_DISABLE, length) == 0) {
+		tracing_set_state(TRACING_DISABLE);
+	}
 }

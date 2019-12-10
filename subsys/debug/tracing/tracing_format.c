@@ -7,18 +7,24 @@
 #include <assert.h>
 #include <sys/printk.h>
 #include <debug/tracing_core.h>
-#include <tracing_packet.h>
 #include <syscall_handler.h>
 #include <debug/tracing_format.h>
 #include <tracing_buffer.h>
+#include <irq.h>
 
 static void tracing_format_string_handler(const char *str, va_list args)
 {
+	int key;
 	bool put_success;
 
+	key = irq_lock();
 	put_success = tracing_buffer_str_put(str, args);
+	irq_unlock(key);
+
 	if (put_success) {
+		//TODO trigger
 	} else {
+		//TODO handle drop
 	}
 }
 
@@ -33,6 +39,7 @@ void z_impl_z_tracing_format_raw_str(const char *data, u32_t length)
 
 void z_vrfy_z_tracing_format_raw_str(const char *data, u32_t length)
 {
+	int key;
 	bool put_success;
 
 	Z_OOPS(Z_SYSCALL_VERIFY_MSG(length == 0,
@@ -40,9 +47,14 @@ void z_vrfy_z_tracing_format_raw_str(const char *data, u32_t length)
 	Z_OOPS(Z_SYSCALL_VERIFY_MSG(data == NULL,
 		"Invalid parameter data"));
 
+	key = irq_lock();
 	put_success = tracing_buffer_put(data, length);
+	irq_unlock(key);
+
 	if (put_success) {
+		//TODO trigger
 	} else {
+		//TODO handle drop
 	}
 }
 #include <syscalls/z_tracing_format_raw_str_mrsh.c>
@@ -81,16 +93,21 @@ void tracing_format_string(const char *str, ...)
 
 void z_impl_tracing_format_data(const char *data, u32_t length)
 {
+	int key;
 	bool put_success;
 
 	if (!is_tracing_enabled() || is_tracing_thread()) {
 		return;
 	}
 
+	key = irq_lock();
 	put_success = tracing_buffer_put((u8_t *)data, length);
+	irq_unlock(key);
+
 	if (put_success) {
-		printk("length = %d\n", length);
+		//TODO trigger
 	} else {
+		//TODO handle drop
 	}
 }
 

@@ -31,7 +31,6 @@ struct usb_device_desc {
 static atomic_t transfer_state;
 static enum usb_dc_status_code usb_device_status = USB_DC_UNKNOWN;
 
-extern void tracing_cmd_handle(u8_t *buf);
 USBD_CLASS_DESCR_DEFINE(primary, 0) struct usb_device_desc dev_desc = {
 	/*
 	 * Interface descriptor 0
@@ -93,7 +92,7 @@ static void tracing_ep_out_cb(u8_t ep, enum usb_dc_ep_cb_status_code ep_status)
 
 	usb_read(ep, buffer, 6, NULL);
 	buffer[6] = '\0';
-	tracing_cmd_handle(&buffer[0]);
+	tracing_cmd_handle(&buffer[0], 6);
 
 #if 0
 	while (bytes_to_read) {
@@ -180,7 +179,7 @@ static void tracing_backend_usb_output(const struct tracing_backend *backend,
 	 */
 	if (usb_dc_ep_mps(TRACING_IF_IN_EP_ADDR) &&
 	    (tsize % usb_dc_ep_mps(TRACING_IF_IN_EP_ADDR) == 0)) {
-		//usb_write(TRACING_IF_IN_EP_ADDR, NULL, 0, NULL);
+		usb_write(TRACING_IF_IN_EP_ADDR, NULL, 0, NULL);
 
 		tracing_backend_usb_busy_wait();
 	}

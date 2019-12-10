@@ -11,7 +11,6 @@
 #include <assert.h>
 #include <syscall.h>
 #include <sys/util.h>
-#include <tracing_packet.h>
 #include <toolchain/common.h>
 #include <debug/tracing_core.h>
 

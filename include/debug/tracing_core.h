@@ -8,7 +8,6 @@
 #define ZEPHYR_INCLUDE_TRACE_CORE_H
 
 #include <syscall.h>
-#include <tracing_packet.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +27,6 @@ __syscall bool is_tracing_enabled(void);
  *
  * @param packet Tracing packet.
  */
-void tracing_list_add_packet(struct tracing_packet *packet);
 
 /**
  * @brief Try to free one tracing list packet.
@@ -40,8 +38,8 @@ void tracing_list_add_packet(struct tracing_packet *packet);
  *
  * @return True if tracing list not empty; False if empty.
  */
-bool tracing_packet_try_free(void);
 
+void tracing_cmd_handle(u8_t *buf, u32_t length);
 /**
  * @brief Check if we are in tracing thread context.
  *

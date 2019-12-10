@@ -8,7 +8,6 @@
 #define _TRACE_BACKEND_H
 
 #include <sys/util.h>
-#include <tracing_packet.h>
 
 #ifdef __cplusplus
 extern "C" {
