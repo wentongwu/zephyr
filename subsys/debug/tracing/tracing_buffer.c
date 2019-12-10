@@ -9,8 +9,7 @@
 static u32_t total_size;
 static struct ring_buf tracing_ring_buf;
 static u8_t tracing_buffer[CONFIG_TRACING_BUFFER_SIZE];
-
-//static u8_t tracing_cmd_buffer[CONFIG_TRACING_CMD_BUFFER_SIZE];
+static u8_t tracing_cmd_buffer[CONFIG_TRACING_CMD_BUFFER_SIZE];
 
 #ifdef CONFIG_NEWLIB_LIBC
 typedef int (*out_func_t)(int c, void *ctx);
@@ -99,4 +98,9 @@ bool tracing_buffer_is_empty(void)
 u32_t tracing_buffer_capacity_get(void)
 {
 	return ring_buf_capacity_get(&tracing_ring_buf);
+}
+
+u8_t *tracing_cmd_buffer_alloc(void)
+{
+	return tracing_cmd_buffer;
 }

@@ -11,6 +11,7 @@
 #include <usb/usb_common.h>
 #include <usb_descriptor.h>
 #include <tracing_backend.h>
+#include <tracing_buffer.h>
 #include <debug/tracing_core.h>
 
 #define USB_TRANSFER_ONGOING               1
@@ -28,6 +29,7 @@ struct usb_device_desc {
 	struct usb_ep_descriptor if0_out_ep;
 } __packed;
 
+static u8_t *cmd;
 static atomic_t transfer_state;
 static enum usb_dc_status_code usb_device_status = USB_DC_UNKNOWN;
 
@@ -85,35 +87,16 @@ static void dev_status_cb(struct usb_cfg_data *cfg,
 static void tracing_ep_out_cb(u8_t ep, enum usb_dc_ep_cb_status_code ep_status)
 {
 	u32_t bytes_to_read = 0;
-	u8_t buffer[7];
 
 	usb_read(ep, NULL, 0, &bytes_to_read);
-	printk("aaa = %d\n", bytes_to_read);
 
-	usb_read(ep, buffer, 6, NULL);
-	buffer[6] = '\0';
-	tracing_cmd_handle(&buffer[0], 6);
+	cmd = tracing_cmd_buffer_alloc();
+	if (cmd) {
+		usb_read(ep, cmd, bytes_to_read, NULL);
+		cmd[bytes_to_read] = '\0';
 
-#if 0
-	while (bytes_to_read) {
-		cmd = tracing_packet_alloc();
-		if (cmd) {
-			printk("cmd\n");
-			cmd->direction = TRACING_IN;
-			cmd->length = MIN(bytes_to_read, sizeof(cmd->buf));
-
-			usb_read(ep, cmd->buf, cmd->length, NULL);
-			cmd->buf[cmd->length] = '\0';
-			bytes_to_read -= cmd->length;
-
-			for (int i = 0; i < cmd->length; i++) {
-				printk("%c", cmd->buf[i]);
-			}
-			printk("\n");
-			tracing_cmd_handle(cmd);
-		}
+		tracing_cmd_handle(cmd, bytes_to_read);
 	}
-#endif
 }
 
 static void tracing_ep_in_cb(u8_t ep, enum usb_dc_ep_cb_status_code ep_status)

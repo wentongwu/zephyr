@@ -16,12 +16,13 @@ extern "C" {
 
 bool tracing_buffer_str_put(const char *str, va_list args);
 bool tracing_buffer_put(u8_t *data, u32_t size);
-u32_t tracing_buffer_get(u8_t *data, u32_t size);
+u32_t tracing_buffer_get(u8_t **data, u32_t size);
 int tracing_buffer_get_finish(u32_t size);
 void tracing_buffer_init(void);
 
 bool tracing_buffer_is_empty(void);
 u32_t tracing_buffer_capacity_get(void);
+u8_t *tracing_cmd_buffer_alloc(void);
 #ifdef __cplusplus
 }
 #endif

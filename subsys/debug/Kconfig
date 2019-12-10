@@ -60,6 +60,13 @@ config TRACING_BUFFER_SIZE
 	help
 	  Number of bytes dedicated for tracing packet buffer.
 
+config TRACING_CMD_BUFFER_SIZE
+	int "Number of bytes dedicated for tracing cmd buffer."
+	default 32
+	range 32 128
+	help
+	  Number of bytes dedicated for tracing cmd buffer.
+
 config TRACING_PACKET_BUF_SIZE
 	int "Number of bytes dedicated for per packet buffer size"
 	default 32
