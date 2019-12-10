@@ -47,6 +47,21 @@ config TRACING
 
 if TRACING
 
+config TRACING_SYNC
+	bool "Synchronous Tracing"
+	help
+	  Enable synchronous tracing. This requires very little latency
+	  backend to be enabled as well.
+
+config TRACING_ASYNC
+	bool "Asynchronous Tracing"
+	default y
+	help
+	  Enable asynchronous tracing. This will buffer all the tracing
+	  packets to the ring buffer first, tracing thread will try to
+	  put as much data in ring buffer as possible when tracing thread
+	  get scheduled.
+
 config TRACING_THREAD_STACK_SIZE
 	int "Stack size for tracing thread"
 	default 2048
