@@ -13,6 +13,7 @@
 #include <tracing_backend.h>
 #include <debug/tracing_core.h>
 #include <syscall_handler.h>
+#include <tracing_buffer.h>
 
 #define TRACING_CMD_ENABLE  "enable"
 #define TRACING_CMD_DISABLE "disable"
@@ -27,15 +28,14 @@ enum tracing_state {
 };
 
 static atomic_t tracing_state;
-static sys_slist_t tracing_list;
-static atomic_t tracing_list_packet_num;
-static struct k_spinlock tracing_list_lock;
 static const struct tracing_backend *working_backend;
 
 static k_tid_t tracing_thread_tid;
 static struct k_thread tracing_thread;
+#if 0
 static struct k_timer tracing_thread_timer;
 static K_SEM_DEFINE(tracing_thread_sem, 0, 1);
+#endif
 static K_THREAD_STACK_DEFINE(tracing_thread_stack,
 			CONFIG_TRACING_THREAD_STACK_SIZE);
 
@@ -44,13 +44,13 @@ static void tracing_set_state(enum tracing_state state)
 	atomic_set(&tracing_state, state);
 }
 
-static void tracing_cmd_handle(struct tracing_packet *packet)
+void tracing_cmd_handle(u8_t *buf)
 {
-	if (strncmp(packet->buf,
-	    TRACING_CMD_ENABLE, packet->length) == 0) {
+	if (strncmp(buf,
+	    TRACING_CMD_ENABLE, 6) == 0) {
 		tracing_set_state(TRACING_ENABLE);
-	} else if (strncmp(packet->buf,
-	    TRACING_CMD_DISABLE, packet->length) == 0) {
+	} else if (strncmp(buf,
+	    TRACING_CMD_DISABLE, 6) == 0) {
 		tracing_set_state(TRACING_DISABLE);
 	}
 }
@@ -71,50 +71,17 @@ static const struct tracing_backend *tracing_get_working_backend(
 	return NULL;
 }
 
-static struct tracing_packet *tracing_list_get_packet(void)
+static void tracing_buffer_handle(u8_t *data, u32_t size)
 {
-	k_spinlock_key_t key;
-	struct tracing_packet *packet = NULL;
-
-	key = k_spin_lock(&tracing_list_lock);
-	packet = CONTAINER_OF(sys_slist_get(&tracing_list),
-			struct tracing_packet, list_node);
-	k_spin_unlock(&tracing_list_lock, key);
-
-	return packet;
-}
-
-static bool tracing_list_peek_head(void)
-{
-	k_spinlock_key_t key;
-	struct tracing_packet *packet = NULL;
-
-	key = k_spin_lock(&tracing_list_lock);
-	if (sys_slist_peek_head(&tracing_list)) {
-		packet = CONTAINER_OF(sys_slist_peek_head(&tracing_list),
-			struct tracing_packet, list_node);
-	}
-	k_spin_unlock(&tracing_list_lock, key);
-
-	return (packet != NULL);
-}
-
-static void tracing_packet_handle(struct tracing_packet *packet)
-{
-	if (packet->direction == TRACING_IN &&
-	    IS_ENABLED(CONFIG_TRACING_HANDLE_HOST_CMD)) {
-		tracing_cmd_handle(packet);
-	} else if (packet->direction == TRACING_OUT) {
-		tracing_backend_output(working_backend, packet);
-	}
-
-	atomic_dec(&tracing_list_packet_num);
-	tracing_packet_free(packet);
+	tracing_backend_output(working_backend, data, size);
 }
 
 static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 {
-	struct tracing_packet *packet = NULL;
+	u8_t *transfering_buf = NULL;
+	u32_t transfering_size = 0;
+	u32_t working_backend_max_size =
+		tracing_backend_get_max_buffer_size(working_backend);
 
 	tracing_thread_tid = k_current_get();
 
@@ -124,29 +91,40 @@ static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 		tracing_set_state(TRACING_ENABLE);
 	}
 
+	printk("working_backend_max_size = %d\n", working_backend_max_size);
 	while (true) {
-		packet = tracing_list_get_packet();
-		if (packet == NULL) {
-			k_sem_take(&tracing_thread_sem, K_FOREVER);
+		if (tracing_buffer_empty()) {
+			//k_sem_take(&tracing_thread_sem, K_FOREVER);
+			k_sleep(100);
 		} else {
-			tracing_packet_handle(packet);
+			transfering_size = tracing_buffer_get(transfering_buf, 1000);
+						//working_backend_max_size - 1);
+			printk("transfering_size = %d\n", transfering_size);
+			tracing_buffer_handle(transfering_buf,
+					      transfering_size);
+
+			tracing_buffer_get_finish(transfering_size);
 		}
 	}
 }
 
+#if 0
 static void tracing_thread_timer_expiry_fn(struct k_timer *timer)
 {
 	k_sem_give(&tracing_thread_sem);
 }
+#endif
 
 static int tracing_init(struct device *arg)
 {
 	ARG_UNUSED(arg);
 
+#if 0
 	k_timer_init(&tracing_thread_timer,
 		tracing_thread_timer_expiry_fn, NULL);
+#endif
 
-	tracing_packet_pool_init();
+	tracing_buffer_init();
 
 	if (working_backend == NULL) {
 		if (IS_ENABLED(CONFIG_TRACING_BACKEND_USB)) {
@@ -186,16 +164,9 @@ bool z_vrfy_is_tracing_enabled(void)
 #include <syscalls/is_tracing_enabled_mrsh.c>
 #endif
 
-void tracing_list_add_packet(struct tracing_packet *packet)
+#if 0
+void tracing_core_process(void)
 {
-	k_spinlock_key_t key;
-
-	key = k_spin_lock(&tracing_list_lock);
-	sys_slist_append(&tracing_list, &packet->list_node);
-	k_spin_unlock(&tracing_list_lock, key);
-
-	atomic_inc(&tracing_list_packet_num);
-
 	if (tracing_thread_tid != NULL && tracing_list_packet_num == 1) {
 		k_timer_start(&tracing_thread_timer,
 			CONFIG_TRACING_THREAD_WAIT_THRESHOLD_MS, K_NO_WAIT);
@@ -218,6 +189,7 @@ bool tracing_packet_try_free(void)
 
 	return tracing_list_peek_head();
 }
+#endif
 
 bool is_tracing_thread(void)
 {

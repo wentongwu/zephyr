@@ -19,6 +19,7 @@ zephyr_sources_ifdef(
   tracing_core.c
   tracing_format.c
   tracing_packet.c
+  tracing_buffer.c
   )
 
 zephyr_sources_ifdef(

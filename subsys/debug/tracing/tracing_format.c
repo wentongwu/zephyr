@@ -10,18 +10,15 @@
 #include <tracing_packet.h>
 #include <syscall_handler.h>
 #include <debug/tracing_format.h>
+#include <tracing_buffer.h>
 
 static void tracing_format_string_handler(const char *str, va_list args)
 {
-	int length;
-	struct tracing_packet *packet = tracing_packet_alloc();
+	bool put_success;
 
-	if (packet) {
-		length = vsnprintk(packet->buf, sizeof(packet->buf), str, args);
-		packet->length = MIN(length, sizeof(packet->buf));
-		packet->direction = TRACING_OUT;
-
-		tracing_list_add_packet(packet);
+	put_success = tracing_buffer_str_put(str, args);
+	if (put_success) {
+	} else {
 	}
 }
 
@@ -36,22 +33,16 @@ void z_impl_z_tracing_format_raw_str(const char *data, u32_t length)
 
 void z_vrfy_z_tracing_format_raw_str(const char *data, u32_t length)
 {
-	struct tracing_packet *packet = tracing_packet_alloc();
+	bool put_success;
 
 	Z_OOPS(Z_SYSCALL_VERIFY_MSG(length == 0,
 		"Invalid parameter length"));
 	Z_OOPS(Z_SYSCALL_VERIFY_MSG(data == NULL,
 		"Invalid parameter data"));
 
-	if (packet) {
-		length = MIN(length, sizeof(packet->buf));
-
-		memcpy(packet->buf, data, length);
-
-		packet->length = length;
-		packet->direction = TRACING_OUT;
-
-		tracing_list_add_packet(packet);
+	put_success = tracing_buffer_put(data, length);
+	if (put_success) {
+	} else {
 	}
 }
 #include <syscalls/z_tracing_format_raw_str_mrsh.c>
@@ -90,23 +81,16 @@ void tracing_format_string(const char *str, ...)
 
 void z_impl_tracing_format_data(const char *data, u32_t length)
 {
-	struct tracing_packet *packet;
+	bool put_success;
 
 	if (!is_tracing_enabled() || is_tracing_thread()) {
 		return;
 	}
 
-	packet = tracing_packet_alloc();
-
-	if (packet) {
-		length = MIN(length, sizeof(packet->buf));
-
-		memcpy(packet->buf, data, length);
-
-		packet->length = length;
-		packet->direction = TRACING_OUT;
-
-		tracing_list_add_packet(packet);
+	put_success = tracing_buffer_put((u8_t *)data, length);
+	if (put_success) {
+		printk("length = %d\n", length);
+	} else {
 	}
 }
 

@@ -91,7 +91,6 @@ config TRACING_THREAD_WAIT_THRESHOLD_MS
 config TRACING_BACKEND_UART
 	bool "Enable UART backend"
 	depends on UART_CONSOLE
-	default y if !SHELL_BACKEND_SERIAL
 	help
 	  When enabled backend is using UART to output tracing data.
 

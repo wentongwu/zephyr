@@ -18,6 +18,7 @@ static struct k_mem_slab tracing_packet_pool;
 static u8_t __noinit __aligned(sizeof(void *))
 		tracing_packet_pool_buf[CONFIG_TRACING_BUFFER_SIZE];
 
+#if 0
 /*
  * Return true if interrupts were locked in current context
  */
@@ -54,6 +55,7 @@ static struct tracing_packet *tracing_packet_try_realloc(void)
 
 	return packet;
 }
+#endif
 
 void tracing_packet_pool_init(void)
 {
@@ -72,10 +74,6 @@ struct tracing_packet *tracing_packet_alloc(void)
 	 */
 	ret = k_mem_slab_alloc(&tracing_packet_pool,
 				(void **)&packet, K_NO_WAIT);
-
-	if (ret != 0 && !k_is_in_isr() && !is_irq_locked()) {
-		packet = tracing_packet_try_realloc();
-	}
 
 	return packet;
 }

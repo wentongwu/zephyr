@@ -29,9 +29,9 @@ struct usb_device_desc {
 } __packed;
 
 static atomic_t transfer_state;
-static struct tracing_packet *cmd;
 static enum usb_dc_status_code usb_device_status = USB_DC_UNKNOWN;
 
+extern void tracing_cmd_handle(u8_t *buf);
 USBD_CLASS_DESCR_DEFINE(primary, 0) struct usb_device_desc dev_desc = {
 	/*
 	 * Interface descriptor 0
@@ -86,12 +86,20 @@ static void dev_status_cb(struct usb_cfg_data *cfg,
 static void tracing_ep_out_cb(u8_t ep, enum usb_dc_ep_cb_status_code ep_status)
 {
 	u32_t bytes_to_read = 0;
+	u8_t buffer[7];
 
 	usb_read(ep, NULL, 0, &bytes_to_read);
+	printk("aaa = %d\n", bytes_to_read);
 
+	usb_read(ep, buffer, 6, NULL);
+	buffer[6] = '\0';
+	tracing_cmd_handle(&buffer[0]);
+
+#if 0
 	while (bytes_to_read) {
 		cmd = tracing_packet_alloc();
 		if (cmd) {
+			printk("cmd\n");
 			cmd->direction = TRACING_IN;
 			cmd->length = MIN(bytes_to_read, sizeof(cmd->buf));
 
@@ -99,9 +107,14 @@ static void tracing_ep_out_cb(u8_t ep, enum usb_dc_ep_cb_status_code ep_status)
 			cmd->buf[cmd->length] = '\0';
 			bytes_to_read -= cmd->length;
 
-			tracing_list_add_packet(cmd);
+			for (int i = 0; i < cmd->length; i++) {
+				printk("%c", cmd->buf[i]);
+			}
+			printk("\n");
+			tracing_cmd_handle(cmd);
 		}
 	}
+#endif
 }
 
 static void tracing_ep_in_cb(u8_t ep, enum usb_dc_ep_cb_status_code ep_status)
@@ -144,11 +157,11 @@ static inline void tracing_backend_usb_busy_wait(void)
 }
 
 static void tracing_backend_usb_output(const struct tracing_backend *backend,
-					struct tracing_packet *packet)
+				       u8_t *data, u32_t length)
 {
-	u8_t *buf = packet->buf;
+	u8_t *buf = data;
 	u32_t bytes, tsize = 0;
-	int ret = 0, length = packet->length;
+	int ret = 0;
 
 	while (length > 0) {
 		atomic_set(&transfer_state, USB_TRANSFER_ONGOING);
@@ -167,7 +180,7 @@ static void tracing_backend_usb_output(const struct tracing_backend *backend,
 	 */
 	if (usb_dc_ep_mps(TRACING_IF_IN_EP_ADDR) &&
 	    (tsize % usb_dc_ep_mps(TRACING_IF_IN_EP_ADDR) == 0)) {
-		usb_write(TRACING_IF_IN_EP_ADDR, NULL, 0, NULL);
+		//usb_write(TRACING_IF_IN_EP_ADDR, NULL, 0, NULL);
 
 		tracing_backend_usb_busy_wait();
 	}
@@ -179,7 +192,8 @@ static void tracing_backend_usb_init(void)
 
 const struct tracing_backend_api tracing_backend_usb_api = {
 	.init = tracing_backend_usb_init,
-	.output  = tracing_backend_usb_output
+	.output  = tracing_backend_usb_output,
+	.max_buffer_size = BULK_EP_MPS
 };
 
 TRACING_BACKEND_DEFINE(tracing_backend_usb, tracing_backend_usb_api);

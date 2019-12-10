@@ -53,28 +53,11 @@ extern "C" {
 		u32_t length = 0;                                              \
 		u8_t *packet_index = NULL;                                     \
 									       \
-		if (_is_user_context()) {                                      \
-			u8_t packet[CONFIG_TRACING_PACKET_BUF_SIZE];           \
+		u8_t packet[CONFIG_TRACING_PACKET_BUF_SIZE];           \
 									       \
-			packet_index = &packet[0];                             \
-			MACRO_MAP(_TRACING_PARAM_APPEND, ##__VA_ARGS__);       \
-			tracing_format_data(packet, length);                   \
-		} else {                                                       \
-			if (is_tracing_enabled() && !is_tracing_thread()) {    \
-				struct tracing_packet *packet = NULL;          \
-									       \
-				packet = tracing_packet_alloc();               \
-				if (packet) {                                  \
-					packet_index = packet->buf;            \
-					MACRO_MAP(_TRACING_PARAM_APPEND,       \
-							##__VA_ARGS__);        \
-									       \
-					packet->length = length;               \
-					packet->direction = TRACING_OUT;       \
-					tracing_list_add_packet(packet);       \
-				}                                              \
-			}                                                      \
-		}                                                              \
+		packet_index = &packet[0];                             \
+		MACRO_MAP(_TRACING_PARAM_APPEND, ##__VA_ARGS__);       \
+		tracing_format_data(packet, length);                   \
 	} while (false)
 
 /**
