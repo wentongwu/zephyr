@@ -22,16 +22,18 @@ static u8_t tracing_buffer[CONFIG_TRACING_BUFFER_SIZE];
 
 static int str_out(int c, void *ctx)
 {
-	static u8_t *dst;
-	static u32_t partial_size = 0;
+	u8_t *dst;
+	u32_t granted_size;
+	int *result = (int *)ctx;
 
-	if (partial_size == 0) {
-		partial_size = ring_buf_put_claim(&tracing_ring_buf,
-						  &dst, *(u32_t *)ctx);
-	} else {
-		*dst++ = (u8_t)c;
-		partial_size--;
-		total_size++;
+	if (*result) {
+		granted_size = ring_buf_put_claim(&tracing_ring_buf, &dst, 1);
+		if (granted_size) {
+			*dst = (u8_t)c;
+			total_size++;
+		} else {
+			*result = 0;
+		}
 	}
 
 	return 0;
@@ -39,22 +41,19 @@ static int str_out(int c, void *ctx)
 
 bool tracing_buffer_str_put(const char *str, va_list args)
 {
-	u32_t ring_buf_space = ring_buf_space_get(&tracing_ring_buf);
-
-	if (ring_buf_space >= CONFIG_TRACING_PACKET_BUF_SIZE) {
-		total_size = 0;
+	int result;
 
 #if !defined(CONFIG_NEWLIB_LIBC) && !defined(CONFIG_ARCH_POSIX)
-		(void)z_prf(str_out,
-			    (void *)&ring_buf_space, (char *)str, args);
+	(void)z_prf(str_out, (void *)&result, (char *)str, args);
 #else
-		z_vprintk(str_out, (void *)&ring_buf_space, str, args);
+	z_vprintk(str_out, (void *)&result, str, args);
 #endif
 
+	if (result) {
 		ring_buf_put_finish(&tracing_ring_buf, total_size);
-
 		return true;
 	} else {
+		ring_buf_put_finish(&tracing_ring_buf, 0);
 		return false;
 	}
 }
