@@ -7,7 +7,6 @@
 #include <init.h>
 #include <string.h>
 #include <kernel.h>
-#include <spinlock.h>
 #include <sys/util.h>
 #include <sys/atomic.h>
 #include <tracing_backend.h>
@@ -33,6 +32,8 @@ static const struct tracing_backend *working_backend;
 
 static k_tid_t tracing_thread_tid;
 static struct k_thread tracing_thread;
+static K_SEM_DEFINE(tracing_thread_sem, 0, 1);
+static struct k_timer tracing_thread_timer;
 static K_THREAD_STACK_DEFINE(tracing_thread_stack,
 			CONFIG_TRACING_THREAD_STACK_SIZE);
 
@@ -75,7 +76,7 @@ static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 
 	while (true) {
 		if (tracing_buffer_is_empty()) {
-			k_sleep(100);
+			k_sem_take(&tracing_thread_sem, K_FOREVER);
 		} else {
 			transfering_length =
 				tracing_buffer_get(&transfering_buf,
@@ -88,9 +89,17 @@ static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 	}
 }
 
+static void tracing_thread_timer_expiry_fn(struct k_timer *timer)
+{
+	k_sem_give(&tracing_thread_sem);
+}
+
 static int tracing_init(struct device *arg)
 {
 	ARG_UNUSED(arg);
+
+	k_timer_init(&tracing_thread_timer,
+		     tracing_thread_timer_expiry_fn, NULL);
 
 	tracing_buffer_init();
 
@@ -156,4 +165,11 @@ void tracing_buffer_handle(u8_t *data, u32_t length)
 void tracing_packet_drop_handle(void)
 {
 	atomic_inc(&tracing_packet_drop_num);
+}
+
+void tracing_try_to_trigger_output(bool before_put_is_empty)
+{
+	if (before_put_is_empty) {
+		k_timer_start(&tracing_thread_timer, 100, K_NO_WAIT);
+	}
 }

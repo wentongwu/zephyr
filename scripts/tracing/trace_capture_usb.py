@@ -86,7 +86,6 @@ def main():
         while True:
             data = []
             data = read_endpoint.read(read_endpoint.wMaxPacketSize, 100000)
-            print(data)
             for c in data:
                 file_desc.write(chr(c).encode('latin1'))
 

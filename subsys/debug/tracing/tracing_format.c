@@ -15,14 +15,15 @@
 static void tracing_format_string_handler(const char *str, va_list args)
 {
 	int key;
-	bool put_success;
+	bool put_success, before_put_is_empty;
 
 	key = irq_lock();
+	before_put_is_empty = tracing_buffer_is_empty();
 	put_success = tracing_buffer_str_put(str, args);
 	irq_unlock(key);
 
 	if (put_success) {
-		//TODO trigger
+		tracing_try_to_trigger_output(before_put_is_empty);
 	} else {
 		tracing_packet_drop_handle();
 	}
@@ -40,7 +41,7 @@ void z_impl_z_tracing_format_raw_str(const char *data, u32_t length)
 void z_vrfy_z_tracing_format_raw_str(const char *data, u32_t length)
 {
 	int key;
-	bool put_success;
+	bool put_success, before_put_is_empty;
 
 	Z_OOPS(Z_SYSCALL_VERIFY_MSG(length == 0,
 		"Invalid parameter length"));
@@ -48,11 +49,12 @@ void z_vrfy_z_tracing_format_raw_str(const char *data, u32_t length)
 		"Invalid parameter data"));
 
 	key = irq_lock();
+	before_put_is_empty = tracing_buffer_is_empty();
 	put_success = tracing_buffer_put(data, length);
 	irq_unlock(key);
 
 	if (put_success) {
-		//TODO trigger
+		tracing_try_to_trigger_output(before_put_is_empty);
 	} else {
 		tracing_packet_drop_handle();
 	}
@@ -94,18 +96,19 @@ void tracing_format_string(const char *str, ...)
 void z_impl_tracing_format_data(const char *data, u32_t length)
 {
 	int key;
-	bool put_success;
+	bool put_success, before_put_is_empty;
 
 	if (!is_tracing_enabled() || is_tracing_thread()) {
 		return;
 	}
 
 	key = irq_lock();
+	before_put_is_empty = tracing_buffer_is_empty();
 	put_success = tracing_buffer_put((u8_t *)data, length);
 	irq_unlock(key);
 
 	if (put_success) {
-		//TODO trigger
+		tracing_try_to_trigger_output(before_put_is_empty);
 	} else {
 		tracing_packet_drop_handle();
 	}

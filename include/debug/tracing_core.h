@@ -42,6 +42,7 @@ __syscall bool is_tracing_enabled(void);
 void tracing_packet_drop_handle(void);
 void tracing_cmd_handle(u8_t *buf, u32_t length);
 void tracing_buffer_handle(u8_t *data, u32_t length);
+void tracing_try_to_trigger_output(bool before_put_is_empty);
 /**
  * @brief Check if we are in tracing thread context.
  *
