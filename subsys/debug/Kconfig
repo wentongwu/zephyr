@@ -79,13 +79,6 @@ config TRACING_BUFFER_SIZE
 	  is used as ring_buffer to buffer data packet and string packet. If
 	  TRACING_SYNC is enabled, it's used to hold the formated string data.
 
-config TRACING_CMD_BUFFER_SIZE
-	int "Size of tracing cmd buffer"
-	default 32
-	range 32 128
-	help
-	  Size of tracing cmd buffer.
-
 config TRACING_PACKET_MAX_SIZE
 	int "Max size of tracing packet"
 	default 32
@@ -124,6 +117,14 @@ config TRACING_HANDLE_HOST_CMD
 	select UART_INTERRUPT_DRIVEN if TRACING_BACKEND_UART
 	help
 	  When enabled tracing will handle cmd from host.
+
+config TRACING_CMD_BUFFER_SIZE
+	int "Size of tracing cmd buffer"
+	default 32
+	range 32 128
+	depends on TRACING_HANDLE_HOST_CMD
+	help
+	  Size of tracing cmd buffer.
 
 endif
 
