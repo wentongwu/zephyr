@@ -28,6 +28,7 @@ enum tracing_state {
 };
 
 static atomic_t tracing_state;
+static atomic_t tracing_packet_drop_num;
 static const struct tracing_backend *working_backend;
 
 static k_tid_t tracing_thread_tid;
@@ -63,6 +64,8 @@ static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 	u32_t tracing_buffer_max_length = tracing_buffer_capacity_get();
 
 	tracing_thread_tid = k_current_get();
+
+	atomic_set(&tracing_packet_drop_num, 0);
 
 	if (IS_ENABLED(CONFIG_TRACING_HANDLE_HOST_CMD)) {
 		tracing_set_state(TRACING_DISABLE);
@@ -148,4 +151,9 @@ void tracing_cmd_handle(u8_t *buf, u32_t length)
 void tracing_buffer_handle(u8_t *data, u32_t length)
 {
 	tracing_backend_output(working_backend, data, length);
+}
+
+void tracing_packet_drop_handle(void)
+{
+	atomic_inc(&tracing_packet_drop_num);
 }

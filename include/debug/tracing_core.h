@@ -39,6 +39,7 @@ __syscall bool is_tracing_enabled(void);
  * @return True if tracing list not empty; False if empty.
  */
 
+void tracing_packet_drop_handle(void);
 void tracing_cmd_handle(u8_t *buf, u32_t length);
 void tracing_buffer_handle(u8_t *data, u32_t length);
 /**
