@@ -56,11 +56,6 @@ static const struct tracing_backend *tracing_get_working_backend(
 	return NULL;
 }
 
-static void tracing_buffer_handle(u8_t *data, u32_t length)
-{
-	tracing_backend_output(working_backend, data, length);
-}
-
 static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 {
 	u8_t *transfering_buf;
@@ -148,4 +143,9 @@ void tracing_cmd_handle(u8_t *buf, u32_t length)
 	    TRACING_CMD_DISABLE, length) == 0) {
 		tracing_set_state(TRACING_DISABLE);
 	}
+}
+
+void tracing_buffer_handle(u8_t *data, u32_t length)
+{
+	tracing_backend_output(working_backend, data, length);
 }
