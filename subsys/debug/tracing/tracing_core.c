@@ -9,10 +9,10 @@
 #include <kernel.h>
 #include <sys/util.h>
 #include <sys/atomic.h>
-#include <tracing_backend.h>
-#include <debug/tracing_core.h>
-#include <syscall_handler.h>
 #include <tracing_buffer.h>
+#include <tracing_backend.h>
+#include <syscall_handler.h>
+#include <debug/tracing_core.h>
 
 #define TRACING_CMD_ENABLE  "enable"
 #define TRACING_CMD_DISABLE "disable"
@@ -170,6 +170,7 @@ void tracing_packet_drop_handle(void)
 void tracing_try_to_trigger_output(bool before_put_is_empty)
 {
 	if (before_put_is_empty) {
-		k_timer_start(&tracing_thread_timer, 100, K_NO_WAIT);
+		k_timer_start(&tracing_thread_timer,
+			      TRACING_THREAD_WAIT_THRESHOLD, K_NO_WAIT);
 	}
 }

@@ -21,10 +21,10 @@
  * parameters with the help of MACRO_MAP.
  */
 #define _TRACING_APPEND_ERR "please configure larger value for"                \
-	STRINGIFY(CONFIG_TRACING_PACKET_BUF_SIZE) "to cover all the parameters"
+	STRINGIFY(CONFIG_TRACING_PACKET_MAX_SIZE) "to cover all the parameters"
 #define _TRACING_PARAM_APPEND(x)                                               \
 	{                                                                      \
-		if (length + sizeof(x) <= CONFIG_TRACING_PACKET_BUF_SIZE) {    \
+		if (length + sizeof(x) <= CONFIG_TRACING_PACKET_MAX_SIZE) {    \
 			memcpy(packet_index, &(x), sizeof(x));                 \
 			length += sizeof(x);                                   \
 			packet_index += sizeof(x);                             \
@@ -47,7 +47,7 @@
 		u32_t length = 0;                                              \
 		u8_t *packet_index = NULL;                                     \
 									       \
-		u8_t packet[CONFIG_TRACING_PACKET_BUF_SIZE];           \
+		u8_t packet[CONFIG_TRACING_PACKET_MAX_SIZE];           \
 									       \
 		packet_index = &packet[0];                             \
 		MACRO_MAP(_TRACING_PARAM_APPEND, ##__VA_ARGS__);       \

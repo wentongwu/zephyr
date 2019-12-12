@@ -6,6 +6,7 @@
 
 #include <sys/ring_buffer.h>
 
+static u8_t tracing_buffer[CONFIG_TRACING_BUFFER_SIZE];
 static u8_t tracing_cmd_buffer[CONFIG_TRACING_CMD_BUFFER_SIZE];
 
 #ifdef CONFIG_NEWLIB_LIBC
@@ -24,7 +25,6 @@ u8_t *tracing_cmd_buffer_alloc(void)
 #ifdef CONFIG_TRACING_ASYNC
 static u32_t total_size;
 static struct ring_buf tracing_ring_buf;
-static u8_t tracing_buffer[CONFIG_TRACING_BUFFER_SIZE];
 
 static int str_put(int c, void *ctx)
 {
@@ -111,7 +111,6 @@ u32_t tracing_buffer_capacity_get(void)
 
 #ifdef CONFIG_TRACING_SYNC
 static u32_t total_size;
-static u8_t tracing_buffer[CONFIG_TRACING_PACKET_BUF_SIZE];
 
 static int str_put(int c, void *ctx)
 {

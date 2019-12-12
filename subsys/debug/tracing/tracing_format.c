@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <irq.h>
 #include <assert.h>
 #include <sys/printk.h>
-#include <debug/tracing_core.h>
-#include <syscall_handler.h>
-#include <debug/tracing_format.h>
 #include <tracing_buffer.h>
-#include <irq.h>
+#include <syscall_handler.h>
+#include <debug/tracing_core.h>
+#include <debug/tracing_format.h>
 
 static void tracing_format_string_handler(const char *str, va_list args)
 {
@@ -78,7 +78,7 @@ void tracing_format_string(const char *str, ...)
 
 	if (_is_user_context()) {
 		int length;
-		char data[CONFIG_TRACING_PACKET_BUF_SIZE];
+		char data[CONFIG_TRACING_PACKET_MAX_SIZE];
 
 		va_start(args, str);
 		length = vsnprintk(data, sizeof(data), str, args);

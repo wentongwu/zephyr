@@ -63,52 +63,41 @@ config TRACING_ASYNC
 	  get scheduled.
 
 config TRACING_THREAD_STACK_SIZE
-	int "Stack size for tracing thread"
-	default 2048
+	int "Stack size of tracing thread"
+	default 1024
+	depends on TRACING_ASYNC
 	help
-	  Set stack size for tracing thread.
+	  Stack size of tracing thread.
 
 config TRACING_BUFFER_SIZE
-	int "Number of bytes dedicated for tracing packet buffer."
-	default 8192
-	range 128 65536
+	int "Size of tracing buffer"
+	default 8192 if TRACING_ASYNC
+	default TRACING_PACKET_MAX_SIZE if TRACING_SYNC
+	range 32 65536
 	help
-	  Number of bytes dedicated for tracing packet buffer.
+	  Size of tracing buffer. If TRACING_ASYNC is enabled, tracing buffer
+	  is used as ring_buffer to buffer data packet and string packet. If
+	  TRACING_SYNC is enabled, it's used to hold the formated string data.
 
 config TRACING_CMD_BUFFER_SIZE
-	int "Number of bytes dedicated for tracing cmd buffer."
+	int "Size of tracing cmd buffer"
 	default 32
 	range 32 128
 	help
-	  Number of bytes dedicated for tracing cmd buffer.
+	  Size of tracing cmd buffer.
 
-config TRACING_PACKET_BUF_SIZE
-	int "Number of bytes dedicated for per packet buffer size"
+config TRACING_PACKET_MAX_SIZE
+	int "Max size of tracing packet"
 	default 32
 	help
-	  Number of bytes dedicated for per packet buffer size.
+	  Max size of tracing packet.
 
-config TRACING_BLOCK_IN_THREAD_TIMEOUT_MS
-	int "Maximum time (in milliseconds) thread can be blocked"
-	default 50
-	range 1 10000
-	help
-	  Maximum time (in milliseconds) thread can be blocked to wait new
-	  tracing packet to be allocated.
-
-config TRACING_THREAD_TRIGGER_THRESHOLD
-	int "Number of buffered tracing packets which triggers tracing thread."
-	default 10
-	help
-	  When number of buffered tracing packets reaches the threshold,
-	  tracing thread will be woken up.
-
-config TRACING_THREAD_WAIT_THRESHOLD_MS
-	int "Set tracing thread waiting threshold"
-	default 1000
+config TRACING_THREAD_WAIT_THRESHOLD
+	int "Tracing thread waiting threshold"
+	default 100
 	help
 	  Tracing thread waiting period given in milliseconds after every first
-	  packet put to tracing packet list.
+	  packet put to tracing buffer.
 
 config TRACING_BACKEND_UART
 	bool "Enable UART backend"
