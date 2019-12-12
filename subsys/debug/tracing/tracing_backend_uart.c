@@ -11,13 +11,14 @@
 #include <assert.h>
 #include <drivers/uart.h>
 #include <tracing_backend.h>
+#include <tracing_buffer.h>
 #include <debug/tracing_core.h>
 
 static const struct tracing_backend tracing_backend_uart;
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
+static u8_t *cmd;
 static u32_t cur;
-static struct tracing_packet *cmd;
 
 static void uart_isr(struct device *dev)
 {
@@ -36,19 +37,17 @@ static void uart_isr(struct device *dev)
 		}
 
 		if (!cmd) {
-			cmd = tracing_packet_alloc();
+			cmd = tracing_cmd_buffer_alloc();
 			if (!cmd) {
 				return;
 			}
-			cmd->direction = TRACING_IN;
 		}
 
 		if (!isprint(byte)) {
 			switch (byte) {
 			case '\r':
-				cmd->buf[cur] = '\0';
-				cmd->length = cur;
-				tracing_list_add_packet(cmd);
+				cmd[cur] = '\0';
+				tracing_cmd_handle(cmd, cur);
 				cmd = NULL;
 				cur = 0U;
 				break;
@@ -59,20 +58,19 @@ static void uart_isr(struct device *dev)
 			continue;
 		}
 
-		if (cur < sizeof(cmd->buf) - 1) {
-			cmd->buf[cur++] = byte;
-		}
+		cmd[cur++] = byte;
 	}
 }
 #endif
 
-static void tracing_backend_uart_output(const struct tracing_backend *backend,
-		struct tracing_packet *packet)
+static void tracing_backend_uart_output(
+		const struct tracing_backend *backend,
+		u8_t *data, u32_t length)
 {
 	struct device *dev = backend->cb->ctx;
 
-	for (u32_t i = 0; i < packet->length; i++) {
-		uart_poll_out(dev, packet->buf[i]);
+	for (u32_t i = 0; i < length; i++) {
+		uart_poll_out(dev, data[i]);
 	}
 }
 

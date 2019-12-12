@@ -175,7 +175,6 @@ static void tracing_backend_usb_init(void)
 const struct tracing_backend_api tracing_backend_usb_api = {
 	.init = tracing_backend_usb_init,
 	.output  = tracing_backend_usb_output,
-	.max_buffer_size = BULK_EP_MPS
 };
 
 TRACING_BACKEND_DEFINE(tracing_backend_usb, tracing_backend_usb_api);

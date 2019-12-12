@@ -41,8 +41,9 @@ static int str_out(int c, void *ctx)
 
 bool tracing_buffer_str_put(const char *str, va_list args)
 {
-	int result;
+	int result = 1;
 
+	total_size = 0;
 #if !defined(CONFIG_NEWLIB_LIBC) && !defined(CONFIG_ARCH_POSIX)
 	(void)z_prf(str_out, (void *)&result, (char *)str, args);
 #else

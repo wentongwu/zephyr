@@ -29,7 +29,6 @@ struct tracing_backend_api {
 	void (*init)(void);
 	void (*output)(const struct tracing_backend *backend,
 		       u8_t *data, u32_t length);
-	u32_t max_buffer_size;
 };
 
 /**
@@ -89,16 +88,6 @@ static inline void tracing_backend_output(
 	if (backend) {
 		backend->api->output(backend, data, length);
 	}
-}
-
-static inline u32_t tracing_backend_get_max_buffer_size(
-			const struct tracing_backend *backend)
-{
-	if (backend) {
-		return backend->api->max_buffer_size;
-	}
-
-	return 0;
 }
 
 /**
