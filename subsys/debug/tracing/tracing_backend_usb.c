@@ -135,18 +135,17 @@ static void tracing_backend_usb_output(const struct tracing_backend *backend,
 				       u8_t *data, u32_t length)
 {
 	int ret = 0;
-	u8_t *buf = data;
 	u32_t bytes, tsize = 0;
 
 	while (length > 0) {
 		atomic_set(&transfer_state, USB_TRANSFER_ONGOING);
 
-		ret = usb_write(TRACING_IF_IN_EP_ADDR, buf, length, &bytes);
+		ret = usb_write(TRACING_IF_IN_EP_ADDR, data, length, &bytes);
 		if (ret) {
 			continue;
 		}
 
-		buf += bytes;
+		data += bytes;
 		length -= bytes;
 		tsize += bytes;
 
