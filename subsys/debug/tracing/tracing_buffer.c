@@ -10,9 +10,11 @@ static struct ring_buf tracing_ring_buf;
 static u8_t tracing_buffer[CONFIG_TRACING_BUFFER_SIZE + 1];
 static u8_t tracing_cmd_buffer[CONFIG_TRACING_CMD_BUFFER_SIZE];
 
-u8_t *tracing_cmd_buffer_alloc(void)
+u32_t tracing_cmd_buffer_alloc(u8_t **data)
 {
-	return tracing_cmd_buffer;
+	*data = &tracing_cmd_buffer[0];
+
+	return sizeof(tracing_cmd_buffer);
 }
 
 u32_t tracing_buffer_put_claim(u8_t **data, u32_t size)

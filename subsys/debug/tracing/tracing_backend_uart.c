@@ -21,8 +21,8 @@ static void uart_isr(struct device *dev)
 {
 	int rx;
 	u8_t byte;
-	static u8_t *cmd;
-	static u32_t length;
+	static u8_t *cmd = NULL;
+	static u32_t length, cur;
 
 
 	while (uart_irq_update(dev) && uart_irq_is_pending(dev)) {
@@ -37,7 +37,7 @@ static void uart_isr(struct device *dev)
 		}
 
 		if (!cmd) {
-			cmd = tracing_cmd_buffer_alloc();
+			length = tracing_cmd_buffer_alloc(&cmd);
 			if (!cmd) {
 				return;
 			}
@@ -46,10 +46,10 @@ static void uart_isr(struct device *dev)
 		if (!isprint(byte)) {
 			switch (byte) {
 			case '\r':
-				cmd[length] = '\0';
-				tracing_cmd_handle(cmd, length);
+				cmd[cur] = '\0';
+				tracing_cmd_handle(cmd, cur);
 				cmd = NULL;
-				length = 0U;
+				cur = 0U;
 				break;
 			default:
 				break;
@@ -58,7 +58,9 @@ static void uart_isr(struct device *dev)
 			continue;
 		}
 
-		cmd[length++] = byte;
+		if (cur < length - 1) {
+			cmd[cur++] = byte;
+		}
 	}
 }
 #endif

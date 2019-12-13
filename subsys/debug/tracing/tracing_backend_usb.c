@@ -85,16 +85,21 @@ static void dev_status_cb(struct usb_cfg_data *cfg,
 
 static void tracing_ep_out_cb(u8_t ep, enum usb_dc_ep_cb_status_code ep_status)
 {
-	u8_t *cmd;
-	u32_t bytes_to_read = 0;
+	u8_t *cmd =NULL;
+	u32_t bytes_to_read = 0, length;
 
 	usb_read(ep, NULL, 0, &bytes_to_read);
 
-	cmd = tracing_cmd_buffer_alloc();
-	if (cmd) {
-		usb_read(ep, cmd, bytes_to_read, NULL);
-		cmd[bytes_to_read] = '\0';
-		tracing_cmd_handle(cmd, bytes_to_read);
+	while (bytes_to_read) {
+		length = tracing_cmd_buffer_alloc(&cmd);
+		if (cmd) {
+			length = MIN(length, bytes_to_read);
+			usb_read(ep, cmd, length, NULL);
+			cmd[bytes_to_read] = '\0';
+			tracing_cmd_handle(cmd, length);
+
+			bytes_to_read -= length;
+		}
 	}
 }
 
