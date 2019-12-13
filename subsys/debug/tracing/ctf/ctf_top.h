@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <ctf_bottom.h>
+#include <debug/tracing_format.h>
 
 /* Limit strings to 20 bytes to optimize bandwidth */
 #define CTF_MAX_STRING_LEN 20
@@ -81,27 +82,17 @@ typedef struct {
 
 static inline void ctf_top_thread_switched_out(u32_t thread_id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_SWITCHED_OUT),
-		thread_id
-		);
+	TRACING_STRING("ctf_top_thread_switched_out\n");
 }
 
 static inline void ctf_top_thread_switched_in(u32_t thread_id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_SWITCHED_IN),
-		thread_id
-		);
+	TRACING_STRING("ctf_top_thread_switched_in\n");
 }
 
 static inline void ctf_top_thread_priority_set(u32_t thread_id, s8_t prio)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_PRIORITY_SET),
-		thread_id,
-		prio
-		);
+	TRACING_STRING("ctf_top_thread_priority_set\n");
 }
 
 static inline void ctf_top_thread_create(
@@ -110,51 +101,32 @@ static inline void ctf_top_thread_create(
 	ctf_bounded_string_t name
 	)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_CREATE),
-		thread_id,
-		name
-		);
+	TRACING_STRING("ctf_top_thread_create\n");
 }
 
 static inline void ctf_top_thread_abort(u32_t thread_id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_ABORT),
-		thread_id
-		);
+	TRACING_STRING("ctf_top_thread_abort\n");
 }
 
 static inline void ctf_top_thread_suspend(u32_t thread_id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_SUSPEND),
-		thread_id
-		);
+	TRACING_STRING("ctf_top_thread_suspend\n");
 }
 
 static inline void ctf_top_thread_resume(u32_t thread_id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_RESUME),
-		thread_id
-		);
+	TRACING_STRING("ctf_top_thread_resume\n");
 }
 
 static inline void ctf_top_thread_ready(u32_t thread_id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_READY),
-		thread_id
-		);
+	TRACING_STRING("ctf_top_thread_ready\n");
 }
 
 static inline void ctf_top_thread_pend(u32_t thread_id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_PENDING),
-		thread_id
-		);
+	TRACING_STRING("ctf_top_thread_pend\n");
 }
 
 static inline void ctf_top_thread_info(
@@ -163,12 +135,7 @@ static inline void ctf_top_thread_info(
 	u32_t stack_size
 	)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_INFO),
-		thread_id,
-		stack_base,
-		stack_size
-		);
+	TRACING_STRING("ctf_top_thread_info\n");
 }
 
 static inline void ctf_top_thread_name_set(
@@ -176,55 +143,35 @@ static inline void ctf_top_thread_name_set(
 	ctf_bounded_string_t name
 	)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_NAME_SET),
-		thread_id,
-		name
-		);
+	TRACING_STRING("ctf_top_thread_name_set\n");
 }
 
 static inline void ctf_top_isr_enter(void)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_ISR_ENTER)
-		);
 }
 
 static inline void ctf_top_isr_exit(void)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_ISR_EXIT)
-		);
 }
 
 static inline void ctf_top_isr_exit_to_scheduler(void)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_ISR_EXIT_TO_SCHEDULER)
-		);
+	TRACING_STRING("ctf_top_isr_exit_to_scheduler\n");
 }
 
 static inline void ctf_top_idle(void)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_IDLE)
-		);
+	TRACING_STRING("ctf_top_idle\n");
 }
 
 static inline void ctf_top_void(u32_t id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_ID_START_CALL),
-		id
-		);
+	TRACING_STRING("ctf_top_void\n");
 }
 
 static inline void ctf_top_end_call(u32_t id)
 {
-	CTF_EVENT(
-		CTF_LITERAL(u8_t, CTF_EVENT_ID_END_CALL),
-		id
-		);
+	TRACING_STRING("ctf_top_end_call\n");
 }
 
 #endif /* SUBSYS_DEBUG_TRACING_CTF_TOP_H */

@@ -32,19 +32,11 @@ struct tracing_backend_api {
 };
 
 /**
- * @brief Tracing backend control block.
- */
-struct tracing_backend_control_block {
-	void *ctx;
-};
-
-/**
  * @brief Tracing backend structure.
  */
 struct tracing_backend {
 	const char *name;
 	const struct tracing_backend_api *api;
-	struct tracing_backend_control_block *cb;
 };
 
 /**
@@ -54,12 +46,10 @@ struct tracing_backend {
  * @param _api  Tracing backend API.
  */
 #define TRACING_BACKEND_DEFINE(_name, _api)                              \
-	static struct tracing_backend_control_block _name##_cb;          \
 	static const Z_STRUCT_SECTION_ITERABLE(tracing_backend, _name) = \
 	{                                                                \
 		.name = STRINGIFY(_name),                                \
 		.api = &_api,                                            \
-		.cb = &_name##_cb                                        \
 	}
 
 /**
@@ -90,23 +80,8 @@ static inline void tracing_backend_output(
 	}
 }
 
-/**
- * @brief Setting user context passed to tracing backend.
- *
- * @param backend Pointer to tracing_backend instance.
- * @param ctx     User context.
- */
-static inline void tracing_backend_ctx_set(
-		const struct tracing_backend *backend,
-		void *ctx)
-{
-	if (backend) {
-		backend->cb->ctx = ctx;
-	}
-}
-
-extern const struct tracing_backend __tracing_backends_start[0];
-extern const struct tracing_backend __tracing_backends_end[0];
+extern char __tracing_backends_start[];
+extern char __tracing_backends_end[];
 
 /**
  * @brief Get the number of enabled backends.
@@ -115,7 +90,9 @@ extern const struct tracing_backend __tracing_backends_end[0];
  */
 static inline u32_t tracing_backend_num_get(void)
 {
-	return __tracing_backends_end - __tracing_backends_start;
+	return (__tracing_backends_end -
+			__tracing_backends_start) /
+				sizeof(struct tracing_backend);
 }
 
 /**
@@ -126,7 +103,10 @@ static inline u32_t tracing_backend_num_get(void)
  */
 static inline const struct tracing_backend *tracing_backend_get(u32_t index)
 {
-	return &__tracing_backends_start[index];
+	const struct tracing_backend *tracing_backend_start_addr =
+		(const struct tracing_backend *)&__tracing_backends_start;
+
+	return tracing_backend_start_addr + index;
 }
 
 #ifdef __cplusplus

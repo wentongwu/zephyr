@@ -14,16 +14,16 @@
 #include <tracing_buffer.h>
 #include <debug/tracing_core.h>
 
-static const struct tracing_backend tracing_backend_uart;
+static struct device *dev;
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
-static u8_t *cmd;
-static u32_t cur;
-
 static void uart_isr(struct device *dev)
 {
-	u8_t byte;
 	int rx;
+	u8_t byte;
+	static u8_t *cmd;
+	static u32_t length;
+
 
 	while (uart_irq_update(dev) && uart_irq_is_pending(dev)) {
 		if (!uart_irq_rx_ready(dev)) {
@@ -46,10 +46,10 @@ static void uart_isr(struct device *dev)
 		if (!isprint(byte)) {
 			switch (byte) {
 			case '\r':
-				cmd[cur] = '\0';
-				tracing_cmd_handle(cmd, cur);
+				cmd[length] = '\0';
+				tracing_cmd_handle(cmd, length);
 				cmd = NULL;
-				cur = 0U;
+				length = 0U;
 				break;
 			default:
 				break;
@@ -58,7 +58,7 @@ static void uart_isr(struct device *dev)
 			continue;
 		}
 
-		cmd[cur++] = byte;
+		cmd[length++] = byte;
 	}
 }
 #endif
@@ -67,8 +67,6 @@ static void tracing_backend_uart_output(
 		const struct tracing_backend *backend,
 		u8_t *data, u32_t length)
 {
-	struct device *dev = backend->cb->ctx;
-
 	for (u32_t i = 0; i < length; i++) {
 		uart_poll_out(dev, data[i]);
 	}
@@ -76,12 +74,8 @@ static void tracing_backend_uart_output(
 
 static void tracing_backend_uart_init(void)
 {
-	struct device *dev;
-
 	dev = device_get_binding(CONFIG_TRACING_BACKEND_UART_NAME);
 	assert(dev);
-
-	tracing_backend_ctx_set(&tracing_backend_uart, dev);
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	uart_irq_rx_disable(dev);
