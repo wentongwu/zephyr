@@ -51,6 +51,8 @@ static int atmel_same70_config(struct device *dev)
 	}
 #endif
 
+	Wdt *wdt = (Wdt *)DT_WDT_SAM_BASE_ADDRESS;
+	wdt->WDT_MR |= WDT_MR_WDDIS;
 	return 0;
 }
 
