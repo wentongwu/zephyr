@@ -23,26 +23,33 @@ __syscall bool is_tracing_enabled(void);
 #include <syscalls/tracing_core.h>
 
 /**
- * @brief Add tracing packet to tracing list.
+ * @brief Give tracing buffer to backend.
  *
- * @param packet Tracing packet.
+ * @param data Tracing buffer address.
+ * @param length Tracing buffer length.
  */
+void tracing_buffer_handle(u8_t *data, u32_t length);
 
 /**
- * @brief Try to free one tracing list packet.
- *
- * Try to handle one packet already added to tracing list to
- * get free space in tracing packet pool. And it will also
- * tell caller if more packet is in tracing list after this
- * free.
- *
- * @return True if tracing list not empty; False if empty.
+ * @brief Handle tracing packet drop.
  */
-
 void tracing_packet_drop_handle(void);
+
+/**
+ * @brief Handle tracing command buffer.
+ *
+ * @param data Tracing command buffer address.
+ * @param length Tracing command buffer length.
+ */
 void tracing_cmd_handle(u8_t *buf, u32_t length);
-void tracing_buffer_handle(u8_t *data, u32_t length);
+
+/**
+ * @brief Try to trigger tracing thread to run after every put.
+ *
+ * @param before_put_is_empty If tracing buffer is empty before this put.
+ */
 void tracing_try_to_trigger_output(bool before_put_is_empty);
+
 /**
  * @brief Check if we are in tracing thread context.
  *
