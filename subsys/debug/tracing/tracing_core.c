@@ -85,22 +85,6 @@ static void tracing_set_state(enum tracing_state state)
 	atomic_set(&tracing_state, state);
 }
 
-static const struct tracing_backend *tracing_get_working_backend(
-		const char *name)
-{
-	u32_t num = tracing_backend_num_get();
-	const struct tracing_backend *backend = NULL;
-
-	for (u32_t index = 0; index < num; index++) {
-		backend = tracing_backend_get(index);
-		if (strcmp(backend->name, name) == 0) {
-			return backend;
-		}
-	}
-
-	return NULL;
-}
-
 static int tracing_init(struct device *arg)
 {
 	ARG_UNUSED(arg);
@@ -110,12 +94,12 @@ static int tracing_init(struct device *arg)
 	if (working_backend == NULL) {
 		if (IS_ENABLED(CONFIG_TRACING_BACKEND_USB)) {
 		    working_backend =
-			tracing_get_working_backend(TRACING_BACKEND_USB_NAME);
+			tracing_backend_get(TRACING_BACKEND_USB_NAME);
 
 			tracing_backend_init(working_backend);
 		} else if (IS_ENABLED(CONFIG_TRACING_BACKEND_UART)) {
 		    working_backend =
-			tracing_get_working_backend(TRACING_BACKEND_UART_NAME);
+			tracing_backend_get(TRACING_BACKEND_UART_NAME);
 
 		    tracing_backend_init(working_backend);
 		}

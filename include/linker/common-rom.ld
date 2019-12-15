@@ -163,7 +163,7 @@
 
 	SECTION_DATA_PROLOGUE(tracing_backends_sections,,)
 	{
-		__tracing_backends_start = .;
+		__tracing_backend_start = .;
 		KEEP(*("._tracing_backend.*"));
-		__tracing_backends_end = .;
+		__tracing_backend_end = .;
 	} GROUP_LINK_IN(ROMABLE_REGION)

@@ -69,7 +69,8 @@ static inline void tracing_backend_init(
  * @brief Output tracing packet with tracing backend.
  *
  * @param backend Pointer to tracing_backend instance.
- * @param packet  Pointer to tracing_packet instance.
+ * @param data    Address of outputing buffer.
+ * @param length  Length of outputing buffer.
  */
 static inline void tracing_backend_output(
 		const struct tracing_backend *backend,
@@ -80,33 +81,30 @@ static inline void tracing_backend_output(
 	}
 }
 
-extern char __tracing_backends_start[];
-extern char __tracing_backends_end[];
+extern const struct tracing_backend __tracing_backend_start[0];
+extern const struct tracing_backend __tracing_backend_end[0];
 
 /**
- * @brief Get the number of enabled backends.
+ * @brief Get the backend based on the name of
+ *        tracing backend in tracing backend section.
  *
- * @return Number of enabled backends.
- */
-static inline u32_t tracing_backend_num_get(void)
-{
-	return (__tracing_backends_end -
-			__tracing_backends_start) /
-				sizeof(struct tracing_backend);
-}
-
-/**
- * @brief Get the backend pointer based on the
- *        index in tracing backend section.
+ * @param name Name of wanted tracing backend.
  *
- * @return Pointer of the backend.
+ * @return Pointer of the wanted backend or NULL.
  */
-static inline const struct tracing_backend *tracing_backend_get(u32_t index)
+static inline const struct tracing_backend *tracing_backend_get(char *name)
 {
-	const struct tracing_backend *tracing_backend_start_addr =
-		(const struct tracing_backend *)&__tracing_backends_start;
+	const struct tracing_backend *backend = &__tracing_backend_start[0];
 
-	return tracing_backend_start_addr + index;
+	while (backend < &__tracing_backend_end[0]) {
+		if (strcmp(backend->name, name) == 0) {
+			return backend;
+		}
+
+		backend++;
+	}
+
+	return NULL;
 }
 
 #ifdef __cplusplus
