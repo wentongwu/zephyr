@@ -66,7 +66,6 @@ static void tracing_thread_func(void *dummy1, void *dummy2, void *dummy3)
 				tracing_buffer_get_claim(
 						&transfering_buf,
 						tracing_buffer_max_length);
-
 			tracing_buffer_handle(transfering_buf,
 					      transfering_length);
 			tracing_buffer_get_finish(transfering_length);
@@ -93,15 +92,15 @@ static int tracing_init(struct device *arg)
 
 	if (working_backend == NULL) {
 		if (IS_ENABLED(CONFIG_TRACING_BACKEND_USB)) {
-		    working_backend =
-			tracing_backend_get(TRACING_BACKEND_USB_NAME);
+			working_backend =
+				tracing_backend_get(TRACING_BACKEND_USB_NAME);
 
 			tracing_backend_init(working_backend);
 		} else if (IS_ENABLED(CONFIG_TRACING_BACKEND_UART)) {
-		    working_backend =
-			tracing_backend_get(TRACING_BACKEND_UART_NAME);
+			working_backend =
+				tracing_backend_get(TRACING_BACKEND_UART_NAME);
 
-		    tracing_backend_init(working_backend);
+			tracing_backend_init(working_backend);
 		}
 	}
 

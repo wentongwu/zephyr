@@ -105,9 +105,9 @@ static void tracing_format_string_handler(const char *str, va_list args)
 	put_success = tracing_format_str_put(str, args);
 
 	if (put_success) {
-		length = tracing_buffer_get(&data, tracing_buffer_size);
-
+		length = tracing_buffer_get_claim(&data, tracing_buffer_size);
 		tracing_buffer_handle((u8_t *)data, length);
+		tracing_buffer_get_finish(length);
 	} else {
 		tracing_packet_drop_handle();
 	}
