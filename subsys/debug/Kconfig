@@ -95,6 +95,7 @@ config TRACING_THREAD_WAIT_THRESHOLD
 config TRACING_BACKEND_UART
 	bool "Enable UART backend"
 	depends on UART_CONSOLE
+	depends on TRACING_ASYNC
 	help
 	  When enabled backend is using UART to output tracing data.
 
@@ -109,6 +110,7 @@ config TRACING_BACKEND_UART_NAME
 
 config TRACING_BACKEND_USB
 	bool "Enable USB backend"
+	depends on TRACING_ASYNC
 	help
 	  When enabled backend is using USB to output tracing data.
 
@@ -124,7 +126,7 @@ config TRACING_CMD_BUFFER_SIZE
 	range 32 128
 	depends on TRACING_HANDLE_HOST_CMD
 	help
-	  Size of tracing cmd buffer.
+	  Size of tracing command buffer.
 
 endif
 

@@ -121,7 +121,7 @@ static int tracing_init(struct device *arg)
 SYS_INIT(tracing_init, POST_KERNEL, 0);
 
 #ifdef CONFIG_TRACING_ASYNC
-void tracing_try_to_trigger_output(bool before_put_is_empty)
+void tracing_trigger_output(bool before_put_is_empty)
 {
 	if (before_put_is_empty) {
 		k_timer_start(&tracing_thread_timer,

@@ -7,6 +7,7 @@
 #ifndef _TRACE_BACKEND_H
 #define _TRACE_BACKEND_H
 
+#include <string.h>
 #include <sys/util.h>
 
 #ifdef __cplusplus
@@ -85,7 +86,7 @@ extern const struct tracing_backend __tracing_backend_start[0];
 extern const struct tracing_backend __tracing_backend_end[0];
 
 /**
- * @brief Get the backend based on the name of
+ * @brief Get tracing backend based on the name of
  *        tracing backend in tracing backend section.
  *
  * @param name Name of wanted tracing backend.

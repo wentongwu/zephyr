@@ -90,7 +90,7 @@ static void tracing_format_string_handler(const char *str, va_list args)
 	irq_unlock(key);
 
 	if (put_success) {
-		tracing_try_to_trigger_output(before_put_is_empty);
+		tracing_trigger_output(before_put_is_empty);
 	} else {
 		tracing_packet_drop_handle();
 	}
@@ -141,7 +141,7 @@ void z_vrfy_z_tracing_format_raw_str(const char *data, u32_t length)
 	irq_unlock(key);
 
 	if (put_success) {
-		tracing_try_to_trigger_output(before_put_is_empty);
+		tracing_trigger_output(before_put_is_empty);
 	} else {
 		tracing_packet_drop_handle();
 	}
@@ -205,7 +205,7 @@ void z_impl_tracing_format_data(const char *data, u32_t length)
 	irq_unlock(key);
 
 	if (put_success) {
-		tracing_try_to_trigger_output(before_put_is_empty);
+		tracing_trigger_output(before_put_is_empty);
 	} else {
 		tracing_packet_drop_handle();
 	}

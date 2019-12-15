@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Tracing enabled or not.
+ * @brief Check tracing enabled or not.
  *
  * @return True if tracing enabled; False if tracing disabled.
  */
@@ -36,7 +36,7 @@ void tracing_buffer_handle(u8_t *data, u32_t length);
 void tracing_packet_drop_handle(void);
 
 /**
- * @brief Handle tracing command buffer.
+ * @brief Handle tracing command.
  *
  * @param data Tracing command buffer address.
  * @param length Tracing command buffer length.
@@ -44,11 +44,11 @@ void tracing_packet_drop_handle(void);
 void tracing_cmd_handle(u8_t *buf, u32_t length);
 
 /**
- * @brief Try to trigger tracing thread to run after every put.
+ * @brief Trigger tracing thread to run after every first put.
  *
  * @param before_put_is_empty If tracing buffer is empty before this put.
  */
-void tracing_try_to_trigger_output(bool before_put_is_empty);
+void tracing_trigger_output(bool before_put_is_empty);
 
 /**
  * @brief Check if we are in tracing thread context.
