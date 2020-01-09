@@ -422,6 +422,26 @@ config TRACING_CTF_BOTTOM_POSIX
 	  Enable POSIX backend for CTF tracing. It will output the CTF stream to a
 	  file using fwrite.
 
+config TRACING_TEST
+	bool "Tracing for test usage"
+	select TRACING
+	help
+	  Enable tracing for test purpose. It must implement tracing_test.h and
+	  the tracing hooks.
+
+if TRACING_TEST
+
+config TRACING_STRING_FORMAT_TEST
+	bool "Test string format tracing"
+	help
+	  The tracing message is string format.
+
+config TRACING_DATA_FORMAT_TEST
+	bool "Test data format tracing"
+	help
+	  The tracing message is data format.
+
+endif
 
 source "subsys/debug/Kconfig.segger"
 
