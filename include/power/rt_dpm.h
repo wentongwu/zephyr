@@ -30,7 +30,6 @@ enum rt_dpm_state {
  */
 struct rt_dpm {
 	_wait_q_t wait_q;
-	atomic_t child_count;
 	atomic_t usage_count;
 	atomic_t disable_count;
 	struct k_spinlock lock;

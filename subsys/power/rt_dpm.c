@@ -50,9 +50,6 @@ int rt_dpm_release(struct device *dev)
 			(rt_pm->suspend)(dev);
 		}
 		rt_pm->state = RT_DPM_SUSPENDED;
-		DEVICE_PARENT_FOREACH(dev, parent) {
-			atomic_dec(&parent->child_count);
-		}
 	}
 
 	thread = z_unpend_first_thread(&rt_pm->wait_q);
@@ -62,6 +59,12 @@ int rt_dpm_release(struct device *dev)
 		z_reschedule(&rt_pm->lock, key);
 	} else {
 		k_spin_unlock(&rt_pm->lock, key);
+	}
+
+	if (ret == 0) {
+		DEVICE_PARENT_FOREACH(dev, parent) {
+			rt_dpm_release(parent);
+		}
 	}
 	return ret;
 }
@@ -78,11 +81,11 @@ int rt_dpm_claim(struct device *dev)
 	key = k_spin_lock(&rt_pm->lock);
 again:
 	if (rt_pm->disable_count > 0) {
-		ret = -EACCES;
-		goto out;
+		k_spin_unlock(&rt_pm->lock, key);
+		return -EACCES;
 	} else if (rt_pm->state == RT_DPM_ACTIVE) {
-		ret = 0;
-		goto out;
+		k_spin_unlock(&rt_pm->lock, key);
+		return 0;
 	}
 
 	if (rt_pm->state == RT_DPM_SUSPENDING
@@ -97,6 +100,12 @@ again:
 	}
 
 	rt_pm->state = RT_DPM_RESUMING;
+
+	k_spin_unlock(&rt_pm->lock, key);
+	DEVICE_PARENT_FOREACH(dev, parent) {
+		rt_dpm_claim(parent);
+	}
+	key = k_spin_lock(&rt_pm->lock);
 
 	if (rt_pm->resume_prepare) {
 		k_spin_unlock(&rt_pm->lock, key);
@@ -119,9 +128,10 @@ again:
 		z_ready_thread(thread);
 		z_reschedule(&rt_pm->lock, key);
 	} else {
-out:
 		k_spin_unlock(&rt_pm->lock, key);
 	}
+
+	return ret;
 }
 
 void rt_dpm_enable(struct device *dev)
