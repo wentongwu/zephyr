@@ -77,7 +77,7 @@ int rt_dpm_release(struct device *dev)
 	return ret;
 }
 
-int rt_dpm_release_async(struct device *dev)
+void rt_dpm_release_async(struct device *dev)
 {
 	struct rt_dpm *rt_pm = &dev->rt_pm;
 
