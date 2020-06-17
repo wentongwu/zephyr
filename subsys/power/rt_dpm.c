@@ -8,6 +8,14 @@
 #include <spinlock.h>
 #include <power/rt_dpm.h>
 
+static void rt_dpm_work_handler(struct k_work *work)
+{
+	struct rt_dpm *rt_pm = CONTAINER_OF(work, struct rt_dpm, work);
+	struct device *dev = CONTAINER_OF(rt_pm, struct device, rt_pm);
+
+	rt_dpm_release(dev);
+}
+
 int rt_dpm_release(struct device *dev)
 {
 	int ret;
@@ -63,10 +71,17 @@ int rt_dpm_release(struct device *dev)
 
 	if (ret == 0) {
 		DEVICE_PARENT_FOREACH(dev, parent) {
-			rt_dpm_release(parent);
+			rt_dpm_release_async(parent);
 		}
 	}
 	return ret;
+}
+
+int rt_dpm_release_async(struct device *dev)
+{
+	struct rt_dpm *rt_pm = &dev->rt_pm;
+
+	k_work_submit(&rt_pm->work);
 }
 
 int rt_dpm_claim(struct device *dev)
@@ -193,6 +208,7 @@ void rt_dpm_init(struct device *dev)
 	rt_pm->usage_count = 0;
 	rt_pm->disable_count = 0;
 	rt_pm->state = RT_DPM_SUSPENDED;
+	k_work_init(&rt_pm->work, rt_dpm_work_handler);
 	rt_pm->wait_q = Z_WAIT_Q_INIT(&rt_pm->wait_q);
 	k_spin_unlock(&rt_pm->lock, key);
 }

@@ -30,6 +30,7 @@ enum rt_dpm_state {
  */
 struct rt_dpm {
 	_wait_q_t wait_q;
+	struct k_work work;
 	atomic_t usage_count;
 	atomic_t disable_count;
 	struct k_spinlock lock;
@@ -67,6 +68,11 @@ int rt_dpm_claim(struct device *dev);
  * @brief Release a device to mark the device as not being used.
  */
 int rt_dpm_release(struct device *dev);
+
+/**
+ * @brief Release a device asynchronously to mark the device as not being used.
+ */
+void rt_dpm_release_async(struct device *dev);
 
 #ifdef __cplusplus
 }
