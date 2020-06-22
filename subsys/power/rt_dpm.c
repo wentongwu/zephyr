@@ -5,6 +5,7 @@
  */
 
 #include <kernel.h>
+#include <ksched.h>
 #include <spinlock.h>
 #include <power/rt_dpm.h>
 
@@ -156,7 +157,7 @@ void rt_dpm_enable(struct device *dev)
 
 	key = k_spin_lock(&rt_pm->lock);
 	if (rt_pm->disable_count > 0) {
-		atomic_dec(&rt_pm->disable_count);
+		rt_pm->disable_count--;
 	}
 	k_spin_unlock(&rt_pm->lock, key);
 }
@@ -167,7 +168,17 @@ void rt_dpm_disable(struct device *dev)
 	struct rt_dpm *rt_pm = &dev->rt_pm;
 
 	key = k_spin_lock(&rt_pm->lock);
-	atomic_inc(&rt_pm->disable_count);
+	if (rt_pm->disable_count == UINT32_MAX) {
+		k_spin_unlock(&rt_pm->lock, key);
+		return;
+	} else if (rt_pm->disable_count > 0) {
+		rt_pm->disable_count++;
+		k_spin_unlock(&rt_pm->lock, key);
+		return;
+	}
+
+	rt_pm->disable_count++;
+
 	if (rt_pm->state == RT_DPM_SUSPENDING
 	    || rt_pm->state == RT_DPM_RESUMING) {
 		do {
@@ -176,25 +187,6 @@ void rt_dpm_disable(struct device *dev)
 			key = k_spin_lock(&rt_pm->lock);
 		} while (rt_pm->state == RT_DPM_SUSPENDING
 			 || rt_pm->state == RT_DPM_RESUMING);
-	}
-
-	if (rt_pm->state == RT_DPM_SUSPENDED) {
-		rt_pm->state = RT_DPM_RESUMING;
-
-		if (rt_pm->resume_prepare) {
-			k_spin_unlock(&rt_pm->lock, key);
-			ret = (rt_pm->resume_prepare)(dev);
-			key = k_spin_lock(&rt_pm->lock);
-		}
-
-		if (ret) {
-			rt_pm->state = RT_DPM_SUSPENDED;
-		} else {
-			if (rt_pm->resume) {
-				(rt_pm->resume)(dev);
-			}
-			rt_pm->state = RT_DPM_ACTIVE;
-		}
 	}
 	k_spin_unlock(&rt_pm->lock, key);
 }
