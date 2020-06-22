@@ -41,8 +41,7 @@ struct rt_dpm {
  * @brief Loop over parent for the given device.
  */
 #define DEVICE_PARENT_FOREACH(dev, iterator) \
-	for (struct device *iterator = dev->parent; \
-	     iterator != NULL; iterator = iterator->next)
+	for (struct device *iterator = dev; iterator != NULL; )
 
 /**
  * @brief Initialize device runtime power management.

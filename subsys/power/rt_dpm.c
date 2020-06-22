@@ -6,6 +6,7 @@
 
 #include <kernel.h>
 #include <ksched.h>
+#include <wait_q.h>
 #include <spinlock.h>
 #include <power/rt_dpm.h>
 
@@ -23,7 +24,7 @@ int rt_dpm_release(struct device *dev)
 	k_spinlock_key_t key;
 	struct k_thread *thread;
 	atomic_val_t pre_usage_count;
-	struct rt_dpm *rt_pm = &dev->rt_pm;
+	struct rt_dpm *rt_pm = dev->rt_pm;
 
 	pre_usage_count = atomic_dec(&rt_pm->usage_count);
 	if (pre_usage_count > 1) {
@@ -80,7 +81,7 @@ int rt_dpm_release(struct device *dev)
 
 void rt_dpm_release_async(struct device *dev)
 {
-	struct rt_dpm *rt_pm = &dev->rt_pm;
+	struct rt_dpm *rt_pm = dev->rt_pm;
 
 	k_work_submit(&rt_pm->work);
 }
@@ -90,7 +91,7 @@ int rt_dpm_claim(struct device *dev)
 	int ret;
 	k_spinlock_key_t key;
 	struct k_thread *thread;
-	struct rt_dpm *rt_pm = &dev->rt_pm;
+	struct rt_dpm *rt_pm = dev->rt_pm;
 
 	atomic_inc(&rt_pm->usage_count);
 
@@ -153,7 +154,7 @@ again:
 void rt_dpm_enable(struct device *dev)
 {
 	k_spinlock_key_t key;
-	struct rt_dpm *rt_pm = &dev->rt_pm;
+	struct rt_dpm *rt_pm = dev->rt_pm;
 
 	key = k_spin_lock(&rt_pm->lock);
 	if (rt_pm->disable_count > 0) {
@@ -165,7 +166,7 @@ void rt_dpm_enable(struct device *dev)
 void rt_dpm_disable(struct device *dev)
 {
 	k_spinlock_key_t key;
-	struct rt_dpm *rt_pm = &dev->rt_pm;
+	struct rt_dpm *rt_pm = dev->rt_pm;
 
 	key = k_spin_lock(&rt_pm->lock);
 	if (rt_pm->disable_count == UINT32_MAX) {
@@ -194,13 +195,13 @@ void rt_dpm_disable(struct device *dev)
 void rt_dpm_init(struct device *dev)
 {
 	k_spinlock_key_t key;
-	struct rt_dpm *rt_pm = &dev->rt_pm;
+	struct rt_dpm *rt_pm = dev->rt_pm;
 
 	key = k_spin_lock(&rt_pm->lock);
 	rt_pm->usage_count = 0;
 	rt_pm->disable_count = 0;
 	rt_pm->state = RT_DPM_SUSPENDED;
 	k_work_init(&rt_pm->work, rt_dpm_work_handler);
-	rt_pm->wait_q = Z_WAIT_Q_INIT(&rt_pm->wait_q);
+	z_waitq_init(&rt_pm->wait_q);
 	k_spin_unlock(&rt_pm->lock, key);
 }

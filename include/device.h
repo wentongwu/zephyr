@@ -20,6 +20,7 @@
  */
 
 #include <init.h>
+#include <power/rt_dpm.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -167,6 +168,14 @@ extern "C" {
 			K_POLL_MODE_NOTIFY_ONLY,			\
 			&_CONCAT(__pm_, dev_name).signal),		\
 	};								\
+	static struct rt_dpm _CONCAT(__rt_dpm, dev_name) __used = {	\
+		.wait_q = Z_WAIT_Q_INIT(				\
+			&_CONCAT(__rt_dpm, dev_name).wait_q),		\
+		.work = Z_WORK_INITIALIZER(NULL),			\
+		.usage_count = ATOMIC_INIT(0),				\
+		.state = RT_DPM_SUSPENDED,				\
+		.disable_count = 0,					\
+	};								\
 	static Z_DECL_ALIGN(struct device)				\
 		DEVICE_NAME_GET(dev_name) __used			\
 	__attribute__((__section__(".device_" #level STRINGIFY(prio)))) = { \
@@ -176,6 +185,7 @@ extern "C" {
 		.driver_data = (data),					\
 		.device_pm_control = (pm_control_fn),			\
 		.pm  = &_CONCAT(__pm_, dev_name),			\
+		.rt_pm = &_CONCAT(__rt_dpm, dev_name),			\
 	};								\
 	Z_INIT_ENTRY_DEFINE(_CONCAT(__device_, dev_name), init_fn,	\
 			    (&_CONCAT(__device_, dev_name)), level, prio)
@@ -259,6 +269,7 @@ struct device {
 				 void *context, device_pm_cb cb, void *arg);
 	struct device_pm * const pm;
 #endif
+	struct rt_dpm *rt_pm;
 };
 
 /**
