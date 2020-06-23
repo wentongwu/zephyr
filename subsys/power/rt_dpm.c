@@ -37,10 +37,8 @@ int rt_dpm_release(struct device *dev)
 	if (rt_pm->disable_count > 0) {
 		k_spin_unlock(&rt_pm->lock, key);
 		return -EACCES;
-	} else if (rt_pm->usage_count > 0) {
-		k_spin_unlock(&rt_pm->lock, key);
-		return -EAGAIN;
-	} else if (rt_pm->state == RT_DPM_SUSPENDED) {
+	} else if (rt_pm->usage_count > 0 ||
+		   rt_pm->state == RT_DPM_SUSPENDED) {
 		k_spin_unlock(&rt_pm->lock, key);
 		return 0;
 	}

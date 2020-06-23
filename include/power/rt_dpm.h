@@ -56,31 +56,64 @@ struct rt_dpm {
 
 /**
  * @brief Initialize device runtime power management.
+ *
+ * Initialize device runtime power management for the given device.
+ *
+ * @param dev Pointer to the given device.
  */
 void rt_dpm_init(struct device *dev);
 
 /**
  * @brief Enable device runtime power management.
+ *
+ * Enable device runtime power management for the given device.
+ *
+ * @param dev Pointer to the given device.
  */
 void rt_dpm_enable(struct device *dev);
 
 /**
  * @brief Disable device runtime power management.
+ *
+ * Disable device runtime power management for the given device.
+ *
+ * @param dev Pointer to the given device.
  */
 void rt_dpm_disable(struct device *dev);
 
 /**
  * @brief Claim a device to mark the device as being used.
+ *
+ * Claim the given device to make sure the coming device operations
+ * after this call are safe. Can't be used in ISRs.
+ *
+ * @param dev Pointer to the given device.
+ *
+ * @retval 0 if successfully claimed the given device.
+ * @retval -EIO if error happens during device resume prepare.
+ * @retval -EACCES if disabled device runtime power management.
  */
 int rt_dpm_claim(struct device *dev);
 
 /**
- * @brief Release a device to mark the device as not being used.
+ * @brief Release the given device.
+ *
+ * Synchronously decrease a usage count of the given device and suspend
+ * the given device if all the conditions satisfied, this function must
+ * be called after any claim happens, forbid asymmetric release.
+ *
+ * @param dev Pointer to the given device.
+ *
+ * @retval 0 if successfully release the given device.
+ * @retval -EIO if error happens during device suspend prepare.
+ * @retval -EACCES if disabled device runtime power management.
  */
 int rt_dpm_release(struct device *dev);
 
 /**
- * @brief Release a device asynchronously to mark the device as not being used.
+ * @brief Release the given device asynchronously.
+ *
+ * @param dev Pointer to the given device.
  */
 void rt_dpm_release_async(struct device *dev);
 
