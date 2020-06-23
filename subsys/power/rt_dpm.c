@@ -88,7 +88,7 @@ void rt_dpm_release_async(struct device *dev)
 
 int rt_dpm_claim(struct device *dev)
 {
-	int ret;
+	int ret = 0;
 	k_spinlock_key_t key;
 	struct k_thread *thread;
 	struct rt_dpm *rt_pm = dev->rt_pm;
