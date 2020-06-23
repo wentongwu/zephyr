@@ -27,10 +27,22 @@ enum rt_dpm_state {
 
 /**
  * @brief Callbacks defined for device runtime power management.
+ *
+ * The resume_prepare/suspend_prepare callbacks are used to do things
+ * without irq locked (e.g. states sync between driver and firmware).
+ * Device driver should take care all the possible errors during this
+ * irq unlocked period and the result will be indicated by the return
+ * value.
+ *
+ * The resume/suspend callbacks will do the real power/clock involved
+ * things with irq locked.
+ *
+ * @retval 0 if successfully excute resume_prepare/suspend_prepare.
+ * @retval -EIO if error happens during the prepare stage.
  */
 struct rt_dpm_ops{
-	int (*resume)(struct device *dev);
-	int (*suspend)(struct device *dev);
+	void (*resume)(struct device *dev);
+	void (*suspend)(struct device *dev);
 	int (*resume_prepare)(struct device *dev);
 	int (*suspend_prepare)(struct device *dev);
 };
@@ -100,7 +112,8 @@ int rt_dpm_claim(struct device *dev);
  *
  * Synchronously decrease a usage count of the given device and suspend
  * the given device if all the conditions satisfied, this function must
- * be called after any claim happens, forbid asymmetric release.
+ * be called after any claim happens, forbid asymmetric release. Can't
+ * be used in ISRs
  *
  * @param dev Pointer to the given device.
  *

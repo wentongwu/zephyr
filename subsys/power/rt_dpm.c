@@ -121,6 +121,9 @@ again:
 		rt_dpm_claim(parent);
 	}
 	key = k_spin_lock(&rt_pm->lock);
+	if (rt_pm->ops && rt_pm->ops->resume) {
+		(rt_pm->ops->resume)(dev);
+	}
 
 	if (rt_pm->ops && rt_pm->ops->resume_prepare) {
 		k_spin_unlock(&rt_pm->lock, key);
@@ -129,11 +132,11 @@ again:
 	}
 
 	if (ret) {
+		if (rt_pm->ops && rt_pm->ops->suspend) {
+			(rt_pm->ops->suspend)(dev);
+		}
 		rt_pm->state = RT_DPM_SUSPENDED;
 	} else {
-		if (rt_pm->ops && rt_pm->ops->resume) {
-			(rt_pm->ops->resume)(dev);
-		}
 		rt_pm->state = RT_DPM_ACTIVE;
 	}
 
