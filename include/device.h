@@ -63,7 +63,7 @@ extern "C" {
  */
 #define SYS_DEVICE_DEFINE(drv_name, init_fn, pm_control_fn, level, prio) \
 	DEVICE_DEFINE(Z_SYS_NAME(init_fn), drv_name, init_fn, pm_control_fn, \
-		      NULL, NULL, level, prio, NULL)
+		      NULL, NULL, NULL, level, prio, NULL)
 
 /**
  * @def DEVICE_INIT
@@ -133,7 +133,7 @@ extern "C" {
 #define DEVICE_AND_API_INIT(dev_name, drv_name, init_fn, data, cfg_info, \
 			    level, prio, api)				 \
 	DEVICE_DEFINE(dev_name, drv_name, init_fn,			 \
-		      device_pm_control_nop, data, cfg_info, level,	 \
+		      device_pm_control_nop, NULL, data, cfg_info, level,\
 		      prio, api)
 #endif
 
@@ -151,12 +151,12 @@ extern "C" {
  */
 #ifndef CONFIG_DEVICE_POWER_MANAGEMENT
 #define DEVICE_DEFINE(dev_name, drv_name, init_fn, pm_control_fn,	 \
-		      data, cfg_info, level, prio, api)			 \
+		      rt_dpm_fn, data, cfg_info, level, prio, api)	 \
 	DEVICE_AND_API_INIT(dev_name, drv_name, init_fn, data, cfg_info, \
 			    level, prio, api)
 #else
 #define DEVICE_DEFINE(dev_name, drv_name, init_fn, pm_control_fn,	\
-		      data, cfg_info, level, prio, api)			\
+		      rt_dpm_fn, data, cfg_info, level, prio, api)	\
 	static struct device_pm _CONCAT(__pm_, dev_name) __used  = {	\
 		.usage = ATOMIC_INIT(0),				\
 		.lock = Z_SEM_INITIALIZER(				\
@@ -175,6 +175,7 @@ extern "C" {
 		.usage_count = ATOMIC_INIT(0),				\
 		.state = RT_DPM_SUSPENDED,				\
 		.disable_count = 0,					\
+		.ops = rt_dpm_fn,					\
 	};								\
 	static Z_DECL_ALIGN(struct device)				\
 		DEVICE_NAME_GET(dev_name) __used			\

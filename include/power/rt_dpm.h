@@ -26,6 +26,16 @@ enum rt_dpm_state {
 };
 
 /**
+ * @brief Callbacks defined for device runtime power management.
+ */
+struct rt_dpm_ops{
+	int (*resume)(struct device *dev);
+	int (*suspend)(struct device *dev);
+	int (*resume_prepare)(struct device *dev);
+	int (*suspend_prepare)(struct device *dev);
+};
+
+/**
  * @brief Structure used to do device runtime power management.
  */
 struct rt_dpm {
@@ -33,6 +43,7 @@ struct rt_dpm {
 	struct k_work work;
 	atomic_t usage_count;
 	struct k_spinlock lock;
+	struct rt_dpm_ops *ops;
 	enum rt_dpm_state state;
 	unsigned int disable_count;
 };

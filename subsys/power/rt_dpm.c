@@ -20,7 +20,7 @@ static void rt_dpm_work_handler(struct k_work *work)
 
 int rt_dpm_release(struct device *dev)
 {
-	int ret;
+	int ret = 0;
 	k_spinlock_key_t key;
 	struct k_thread *thread;
 	atomic_val_t pre_usage_count;
@@ -47,17 +47,17 @@ int rt_dpm_release(struct device *dev)
 
 	rt_pm->state = RT_DPM_SUSPENDING;
 
-	if (rt_pm->suspend_prepare) {
+	if (rt_pm->ops && rt_pm->ops->suspend_prepare) {
 		k_spin_unlock(&rt_pm->lock, key);
-		ret = (rt_pm->suspend_prepare)(dev);
+		ret = (rt_pm->ops->suspend_prepare)(dev);
 		key = k_spin_lock(&rt_pm->lock);
 	}
 
 	if (ret) {
 		rt_pm->state = RT_DPM_ACTIVE;
 	} else {
-		if (rt_pm->suspend) {
-			(rt_pm->suspend)(dev);
+		if (rt_pm->ops && rt_pm->ops->suspend) {
+			(rt_pm->ops->suspend)(dev);
 		}
 		rt_pm->state = RT_DPM_SUSPENDED;
 	}
@@ -124,17 +124,17 @@ again:
 	}
 	key = k_spin_lock(&rt_pm->lock);
 
-	if (rt_pm->resume_prepare) {
+	if (rt_pm->ops && rt_pm->ops->resume_prepare) {
 		k_spin_unlock(&rt_pm->lock, key);
-		ret = (rt_pm->resume_prepare)(dev);
+		ret = (rt_pm->ops->resume_prepare)(dev);
 		key = k_spin_lock(&rt_pm->lock);
 	}
 
 	if (ret) {
 		rt_pm->state = RT_DPM_SUSPENDED;
 	} else {
-		if (rt_pm->resume) {
-			(rt_pm->resume)(dev);
+		if (rt_pm->ops && rt_pm->ops->resume) {
+			(rt_pm->ops->resume)(dev);
 		}
 		rt_pm->state = RT_DPM_ACTIVE;
 	}
