@@ -20,6 +20,7 @@
  */
 
 #include <init.h>
+#include <sys/onoff.h>
 #include <sys/device_mmio.h>
 
 #ifdef __cplusplus
@@ -213,6 +214,7 @@ struct device {
 	/** Pointer to device instance power management data */
 	struct device_pm * const pm;
 #endif
+	struct onoff_manager mgr;
 };
 
 /**
